@@ -2,83 +2,57 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import QuestionMark from "../game/QuestionMark";
+import PressButton from "../game/PressButton";
+import HowItWorksPopup from "../game/HowItWorksPopup";
+import Star from "../game/Star";
 
 export default function Rightbody() {
   const router = useRouter();
+  const [showPopup, setShowPopup] = useState(false);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="relative flex items-center justify-center">
-        {/* Pixel art button */}
-        <motion.div
-          className="relative w-40 h-40"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <div
-            onClick={() => router.push("/game")}
-            className="w-full h-full cursor-pointer"
-            style={{
-              background: "#FF3B9A",
-              clipPath:
-                "polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%)",
-              boxShadow: "0 0 20px rgba(255, 59, 154, 0.3)",
+    <div className="relative w-full h-full flex items-center justify-center">
+      <div className="relative w-full h-full max-w-[800px] mx-auto px-8">
+        {/* Main game section */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full">
+          <motion.div
+            className="relative overflow-hidden"
+            animate={{
+              y: [-6, 6, -6],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
             }}
           >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-white text-2xl pixel-font">PRESS</span>
+            {/* Stars */}
+            <div className="absolute top-4 left-4 w-6 h-6">
+              <Star size={24} className="text-[#FFD700]" />
             </div>
-          </div>
+            <div className="absolute top-4 right-4 w-6 h-6">
+              <Star size={24} className="text-[#FFD700]" />
+            </div>
+            <div className="absolute bottom-4 left-4 w-6 h-6">
+              <Star size={24} className="text-[#FFD700]" />
+            </div>
 
-          {/* Stars */}
-          {[
-            { left: "-2rem", top: "-2rem" },
-            { right: "-2rem", top: "0" },
-            { left: "-3rem", bottom: "0" },
-          ].map((position, index) => (
-            <motion.div
-              key={index}
-              className="absolute text-[#FFE600] text-3xl"
-              style={position}
-              animate={{
-                y: [-4, 4, -4],
-                scale: [1, 1.2, 1],
-                rotate: [0, 180, 360],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                delay: index * 0.5,
-              }}
-            >
-              ⭐
-            </motion.div>
-          ))}
+            {/* PRESS button */}
+            <div className="flex justify-center">
+              <PressButton />
+            </div>
+          </motion.div>
+        </div>
 
-          {/* Coins */}
-          {[
-            { right: "-1rem", top: "-1rem" },
-            { left: "-2rem", bottom: "-1rem" },
-            { right: "-2rem", bottom: "2rem" },
-          ].map((position, index) => (
-            <motion.div
-              key={`coin-${index}`}
-              className="absolute w-8 h-8 rounded-full bg-[#FFD700]"
-              style={position}
-              animate={{
-                rotateY: [0, 360],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                delay: index * 0.3,
-              }}
-            >
-              <div className="w-6 h-6 m-1 rounded-full border-2 border-[#B8860B]"></div>
-            </motion.div>
-          ))}
-        </motion.div>
+        {/* Question Mark Button */}
+        <div className="absolute bottom-8 right-8">
+          <QuestionMark onClick={() => setShowPopup(true)} />
+        </div>
+
+        {/* How It Works Popup */}
+        {showPopup && <HowItWorksPopup onClose={() => setShowPopup(false)} />}
       </div>
     </div>
   );
