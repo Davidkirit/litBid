@@ -16,7 +16,8 @@ export default function Body() {
   const rightBodyRef = useRef<HTMLDivElement>(null);
 
   const scrollToRightBody = () => {
-    if (window.innerWidth < 768) {
+    // ✅ Safe usage of `window` to avoid SSR build errors
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
       rightBodyRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -108,7 +109,7 @@ export default function Body() {
               {renderLeftContent()}
             </div>
 
-            {/* Right column with button */}
+            {/* Right column */}
             <div
               ref={rightBodyRef}
               className="border-2 border-[#FFD700] rounded-lg p-3 md:p-4 h-[400px] md:h-[500px] scroll-mt-4 relative"
