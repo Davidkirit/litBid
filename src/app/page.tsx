@@ -1,3 +1,5 @@
+"use client";
+
 import NavBar from "./component/layout/Navbar";
 import Footer from "./component/layout/Footer";
 import Body from "./component/layout/Body";
