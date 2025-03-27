@@ -4,11 +4,18 @@ import { useGame } from "../../context/GameContext";
 
 export default function Countdown() {
   const { gameState } = useGame();
-  const { timer } = gameState;
+  const { timer, maxTimer } = gameState;
 
   const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+    }
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
       .toString()
       .padStart(2, "0")}`;
@@ -19,8 +26,9 @@ export default function Countdown() {
       <div className="text-4xl pixel-font text-white mb-2">
         {formatTime(timer)}
       </div>
-      <div className="text-sm text-gray-400">
-        Next bid resets timer to 30 minutes
+      <div className="text-sm text-gray-400 text-center">
+        <div>Next press resets timer to {formatTime(maxTimer)}</div>
+        <div className="text-xs mt-1">and reduces max time by 1 second</div>
       </div>
     </div>
   );

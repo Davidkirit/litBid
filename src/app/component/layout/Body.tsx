@@ -7,6 +7,7 @@ import Leftbody from "./Leftbody";
 import Rightbody from "./Rightbody";
 import Rewards from "../game/Rewards";
 import Stake from "../game/Stake";
+import Coin from "../game/Coin";
 
 export default function Body() {
   const [activeTab, setActiveTab] = useState<"litbid" | "rewards" | "stake">(
@@ -38,7 +39,12 @@ export default function Body() {
     <div className="min-h-screen flex justify-center items-center px-4 py-6 md:p-6">
       <div className="w-full max-w-[1100px]">
         {/* Main container */}
-        <div>
+        <div className="relative">
+          {/* Coins */}
+          {Array.from({ length: 20 }).map((_, index) => (
+            <Coin key={index} index={index} />
+          ))}
+
           {/* Top navigation with lines */}
           <div className="relative flex flex-col sm:flex-row justify-between mb-6 text-xs sm:text-sm tracking-[0.2em] text-white pixel-font gap-4 sm:gap-0">
             {/* Left navigation with connecting lines */}
@@ -105,7 +111,7 @@ export default function Body() {
             {/* Right column with button */}
             <div
               ref={rightBodyRef}
-              className="border-2 border-[#FFD700] rounded-lg p-3 md:p-4 h-[400px] md:h-[500px] scroll-mt-4"
+              className="border-2 border-[#FFD700] rounded-lg p-3 md:p-4 h-[400px] md:h-[500px] scroll-mt-4 relative"
             >
               <Rightbody />
             </div>

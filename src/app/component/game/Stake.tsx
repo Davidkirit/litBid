@@ -7,11 +7,10 @@ export default function Stake() {
   const { gameState, stakeTokens } = useGame();
   const { userStake, userScore, referralRewards } = gameState;
   const [isLoading, setIsLoading] = useState(false);
-  const [stakeAmount, setStakeAmount] = useState("");
   const [solAmount, setSolAmount] = useState("");
 
   const handleStake = async () => {
-    const amount = parseFloat(stakeAmount);
+    const amount = parseFloat(solAmount);
     if (isNaN(amount) || amount <= 0) {
       alert("Please enter a valid amount");
       return;
@@ -20,7 +19,6 @@ export default function Stake() {
     setIsLoading(true);
     try {
       await stakeTokens(amount);
-      setStakeAmount("");
       setSolAmount("");
     } catch (error) {
       console.error("Failed to stake tokens:", error);
@@ -32,9 +30,9 @@ export default function Stake() {
 
   const handlePercentage = (percentage: number) => {
     if (percentage === 100) {
-      setStakeAmount(userStake.toString());
+      setSolAmount(userStake.toString());
     } else {
-      setStakeAmount((userStake * (percentage / 100)).toString());
+      setSolAmount((userStake * (percentage / 100)).toString());
     }
   };
 
@@ -43,7 +41,7 @@ export default function Stake() {
       {/* Top stats */}
       <div className="bg-[#1a1b35] px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-md inline-block">
         <span className="text-gray-400 pixel-font text-[8px] sm:text-xs">
-          {userStake.toFixed(2)} $LITBID STAKED
+          {userStake.toFixed(2)} SOL STAKED
         </span>
       </div>
 
@@ -53,8 +51,8 @@ export default function Stake() {
           NEW POSITION
         </h2>
         <p className="text-gray-400 pixel-font text-[8px] sm:text-xs leading-tight">
-          STAKE $LITBID TO EARN REWARDS FROM THE BONZI AND THE LIQUIDITY
-          TRIFECTA SIMULTANEOUSLY. MEOW MEOW WOOF WOOF LITBID LITBID
+          STAKE SOL TO EARN REWARDS FROM THE BONZI AND THE LIQUIDITY TRIFECTA
+          SIMULTANEOUSLY. MEOW MEOW WOOF WOOF LITBID LITBID
         </p>
       </div>
 
@@ -62,20 +60,6 @@ export default function Stake() {
       <div className="space-y-0.5 sm:space-y-2">
         <div className="text-white pixel-font text-[10px] sm:text-sm">
           AMOUNT
-        </div>
-
-        {/* Input container */}
-        <div className="bg-[#1a1b35] p-1.5 sm:p-3 rounded-lg flex justify-between items-center">
-          <input
-            type="number"
-            value={stakeAmount}
-            onChange={(e) => setStakeAmount(e.target.value)}
-            className="bg-transparent text-base sm:text-xl text-white pixel-font outline-none w-full"
-            placeholder="Enter amount"
-          />
-          <span className="text-gray-400 pixel-font text-[10px] sm:text-sm">
-            $LITBID
-          </span>
         </div>
 
         {/* SOL Amount Input */}
@@ -95,7 +79,7 @@ export default function Stake() {
         {/* Balance and Percentages */}
         <div className="flex justify-between items-center">
           <span className="text-gray-500 pixel-font text-[8px] sm:text-xs">
-            BALANCE: {userStake.toFixed(2)} $LITBID
+            BALANCE: {userStake.toFixed(2)} SOL
           </span>
           <div className="flex gap-0.5 sm:gap-2 text-[#FFD700] pixel-font text-[8px] sm:text-xs">
             <button
@@ -124,11 +108,9 @@ export default function Stake() {
       <div className="space-y-0.5 sm:space-y-2">
         <button
           onClick={handleStake}
-          disabled={isLoading || !stakeAmount || !solAmount}
+          disabled={isLoading || !solAmount}
           className={`w-full bg-[#B8860B] hover:bg-[#9A7209] text-black pixel-font py-1 sm:py-2 rounded-lg transition-colors text-[10px] sm:text-sm ${
-            isLoading || !stakeAmount || !solAmount
-              ? "opacity-50 cursor-not-allowed"
-              : ""
+            isLoading || !solAmount ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
           {isLoading ? "PROCESSING..." : "PROCEED"}

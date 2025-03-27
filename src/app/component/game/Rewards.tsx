@@ -6,7 +6,7 @@ export default function Rewards() {
       <div className="text-sm tracking-[0.3em] text-white/90 pixel-font">
         REWARDS SECTION
       </div>
-      {/* Add your rewards content here */}
+      <div className="text-lg text-gray-400 italic mt-4">Coming Soon...</div>
     </div>
   );
 }

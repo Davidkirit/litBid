@@ -1,11 +1,21 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection } from "@solana/wallet-adapter-react";
 
 interface GameState {
   poolAmount: number;
   currentBid: number;
   timer: number;
+  maxTimer: number;
   epoch: number;
   isEarlyBird: boolean;
   userScore: number;
@@ -13,6 +23,8 @@ interface GameState {
   referralLink: string;
   referralRewards: number;
   isConnected: boolean;
+  walletAddress: string | null;
+  solBalance: number | null;
 }
 
 interface GameContextType {
@@ -21,41 +33,100 @@ interface GameContextType {
   stakeTokens: (amount: number) => Promise<void>;
   connectWallet: () => Promise<void>;
   getReferralLink: () => string;
+  handlePress: () => Promise<void>;
+  showWalletModal: boolean;
+  setShowWalletModal: (show: boolean) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
+const INITIAL_MAX_TIMER = 3600; // 1 hour in seconds
+const MIN_MAX_TIMER = 60; // 1 minute in seconds
+
 export function GameProvider({ children }: { children: ReactNode }) {
+  const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
+  const [showWalletModal, setShowWalletModal] = useState(false);
+
   const [gameState, setGameState] = useState<GameState>({
-    poolAmount: 1, // Starting pool amount
-    currentBid: 0.1, // 10% of pool
-    timer: 1800, // 30 minutes in seconds
+    poolAmount: 1,
+    currentBid: 0.1,
+    timer: INITIAL_MAX_TIMER,
+    maxTimer: INITIAL_MAX_TIMER,
     epoch: 1,
-    isEarlyBird: true, // First 30 epochs
+    isEarlyBird: true,
     userScore: 0,
     userStake: 0,
     referralLink: "",
     referralRewards: 0,
     isConnected: false,
+    walletAddress: null,
+    solBalance: null,
   });
 
+  // Update wallet connection status
+  useEffect(() => {
+    const updateWalletStatus = async () => {
+      if (connected && publicKey) {
+        try {
+          const balance = await connection.getBalance(publicKey);
+          setGameState((prev) => ({
+            ...prev,
+            isConnected: true,
+            walletAddress: publicKey.toString(),
+            solBalance: balance / 1e9, // Convert lamports to SOL
+          }));
+        } catch (error) {
+          console.error("Failed to get wallet balance:", error);
+        }
+      } else {
+        setGameState((prev) => ({
+          ...prev,
+          isConnected: false,
+          walletAddress: null,
+          solBalance: null,
+        }));
+      }
+    };
+
+    updateWalletStatus();
+  }, [connected, publicKey, connection]);
+
+  // Timer countdown effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGameState((prev) => ({
+        ...prev,
+        timer: Math.max(0, prev.timer - 1),
+      }));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Handle timer reaching zero
+  useEffect(() => {
+    if (gameState.timer === 0) {
+      // Handle game end logic here
+      console.log("Game ended - last presser wins!");
+    }
+  }, [gameState.timer]);
+
   const placeBid = async (amount: number) => {
-    // Placeholder for actual blockchain interaction
     const newPoolAmount = gameState.poolAmount + amount;
     setGameState((prev) => ({
       ...prev,
       poolAmount: newPoolAmount,
       currentBid: calculateMinimumBid(newPoolAmount),
-      timer: 1800, // Reset to 30 minutes
+      timer: 1800,
     }));
   };
 
   const calculateMinimumBid = (pool: number) => {
-    return pool * 0.1; // 10% of pool
+    return pool * 0.1;
   };
 
   const stakeTokens = async (amount: number) => {
-    // Placeholder for actual staking interaction
     setGameState((prev) => ({
       ...prev,
       userStake: prev.userStake + amount,
@@ -63,17 +134,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const connectWallet = async () => {
-    // Placeholder for wallet connection
-    setGameState((prev) => ({
-      ...prev,
-      isConnected: true,
-      referralLink:
-        "https://litbid.com/ref/" + Math.random().toString(36).substring(7),
-    }));
+    setShowWalletModal(true);
   };
 
   const getReferralLink = () => {
     return gameState.referralLink;
+  };
+
+  const handlePress = async () => {
+    if (!gameState.isConnected) {
+      setShowWalletModal(true);
+      throw new Error("Please connect your wallet first");
+    }
+
+    // Calculate new max timer
+    const newMaxTimer = Math.max(MIN_MAX_TIMER, gameState.maxTimer - 1);
+
+    setGameState((prev) => ({
+      ...prev,
+      timer: newMaxTimer,
+      maxTimer: newMaxTimer,
+      userScore: prev.userScore + 1,
+    }));
   };
 
   return (
@@ -84,6 +166,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         stakeTokens,
         connectWallet,
         getReferralLink,
+        handlePress,
+        showWalletModal,
+        setShowWalletModal,
       }}
     >
       {children}

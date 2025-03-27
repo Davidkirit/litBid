@@ -1,36 +1,32 @@
 "use client";
 
-export default function NavBar() {
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+
+export default function Navbar() {
+  const { connected } = useWallet();
+
   return (
-    <nav className="bg-black/80 backdrop-blur-sm p-4 flex items-center justify-between">
-      <div className="flex items-center">
-        <h1 className="text-4xl pixel-font relative">
-          {/* Base layer */}
-          <span className="relative z-20 text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]">
-            LITBID
-          </span>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-[#0B0F2F] via-[#11154D] to-[#0B0F2F] backdrop-blur-sm border-b border-[#FFD700]/20 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
+          {/* Logo/Brand aligned fully left */}
+          <div className="flex-shrink-0">
+            <span
+              className="text-white pixel-font text-4xl"
+              style={{
+                textShadow: "2px 2px 0 #00A3FF, 4px 4px 0 #0056FF",
+              }}
+            >
+              LITBID
+            </span>
+          </div>
 
-          {/* Shadow layers */}
-          <span className="absolute left-[2px] top-[2px] z-10 text-[#644A03]">
-            LITBID
-          </span>
-          <span className="absolute left-[3px] top-[3px] z-0 text-[#644A03]">
-            LITBID
-          </span>
-          <span className="absolute left-[4px] top-[4px] z-0 text-[#644A03]">
-            LITBID
-          </span>
-        </h1>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-400 rounded-full"></div>
-          <span className="text-gray-400 text-sm">N/A SOL</span>
+          {/* Wallet Connect aligned fully right */}
+          <div className="flex-shrink-0 ml-auto">
+            <WalletMultiButton className="!bg-[#FF3B9A] !rounded-lg !px-6 !py-2 !text-white hover:!bg-[#FF3B9A]/80 !transition-all !duration-200 !h-auto !text-sm pixel-font" />
+          </div>
         </div>
-        <button className="bg-white hover:bg-[#FF3B9A] text-[#0F1225] hover:text-white px-6 py-2 rounded-full transition-all duration-200 pixel-font text-sm">
-          Connect Wallet
-        </button>
       </div>
     </nav>
   );

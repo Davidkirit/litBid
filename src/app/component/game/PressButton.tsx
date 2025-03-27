@@ -1,11 +1,26 @@
+"use client";
+
 import { motion } from "framer-motion";
+import { useGame } from "../../context/GameContext";
 
 const PressButton = () => {
+  const { gameState, handlePress } = useGame();
+  const { timer } = gameState;
+
+  const onPress = async () => {
+    try {
+      await handlePress();
+    } catch (error) {
+      console.error("Failed to press:", error);
+    }
+  };
+
   return (
     <motion.div
-      className="relative w-48 h-48 filter drop-shadow-[0_0_40px_rgba(255,255,255,0.15)]"
+      className="relative w-48 h-48 filter drop-shadow-[0_0_40px_rgba(255,255,255,0.15)] cursor-pointer"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
+      onClick={onPress}
     >
       {/* White outer glow layer */}
       <div
