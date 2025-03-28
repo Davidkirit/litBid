@@ -1,6 +1,6 @@
-"use client"; // Only if you're using the App Router in Next.js 13
+"use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Referral from "../game/Referral";
 import LeaderBoard from "../game/LeaderBoard";
 import Leftbody from "./Leftbody";
@@ -13,10 +13,15 @@ export default function Body() {
   const [activeTab, setActiveTab] = useState<"litbid" | "rewards" | "stake">(
     "litbid"
   );
+  const [isMounted, setIsMounted] = useState(false);
   const rightBodyRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const scrollToRightBody = () => {
-    if (window.innerWidth < 768) {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
       rightBodyRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
@@ -35,24 +40,22 @@ export default function Body() {
     }
   };
 
+  if (!isMounted) {
+    return null; // or a loading spinner
+  }
+
   return (
     <div className="min-h-screen flex justify-center items-center px-4 py-6 md:p-6">
       <div className="w-full max-w-[1100px]">
-        {/* Main container */}
         <div className="relative">
-          {/* Coins */}
           {Array.from({ length: 20 }).map((_, index) => (
             <Coin key={index} index={index} />
           ))}
 
-          {/* Top navigation with lines */}
           <div className="relative flex flex-col sm:flex-row justify-between mb-6 text-xs sm:text-sm tracking-[0.2em] text-white pixel-font gap-4 sm:gap-0">
-            {/* Left navigation with connecting lines */}
             <div className="relative flex flex-wrap gap-4 sm:gap-8 justify-center sm:justify-start">
-              {/* Horizontal line connecting tabs */}
               <div className="absolute top-1/2 left-0 w-full h-[2px] bg-[#FFD700] -z-10 hidden sm:block" />
 
-              {/* Navigation items */}
               <span
                 className={`cursor-pointer relative px-4 py-2 transition-all duration-200 ${
                   activeTab === "litbid"
@@ -85,9 +88,7 @@ export default function Body() {
               </span>
             </div>
 
-            {/* Right side text with line */}
             <div className="relative text-center sm:text-right">
-              {/* Horizontal line for right side */}
               <div className="absolute top-1/2 right-0 w-full sm:w-[150%] h-[2px] bg-[#FFD700] -z-10 hidden sm:block" />
 
               <div
@@ -101,14 +102,11 @@ export default function Body() {
             </div>
           </div>
 
-          {/* Content grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {/* Left column */}
             <div className="border-2 border-[#FFD700] rounded-lg p-3 md:p-4 h-[400px] md:h-[500px]">
               {renderLeftContent()}
             </div>
 
-            {/* Right column with button */}
             <div
               ref={rightBodyRef}
               className="border-2 border-[#FFD700] rounded-lg p-3 md:p-4 h-[400px] md:h-[500px] scroll-mt-4 relative"
@@ -117,7 +115,6 @@ export default function Body() {
             </div>
           </div>
 
-          {/* Bottom sections */}
           <div className="space-y-4 md:space-y-6 mt-4 md:mt-6">
             <div className="border-2 border-[#FFD700] rounded-lg p-3 md:p-4">
               <Referral />
