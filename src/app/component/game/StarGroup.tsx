@@ -6,7 +6,7 @@ import Star from "./Star";
 export default function StarGroup() {
   return (
     <div className="absolute -left-20 top-1/2 -translate-y-1/2 flex flex-col items-start justify-center gap-4">
-      {/* First star - top position, aligned vertically */}
+      {/* First star */}
       <motion.div
         className="relative -translate-y-16"
         animate={{
@@ -22,7 +22,7 @@ export default function StarGroup() {
         <Star size={14} />
       </motion.div>
 
-      {/* Second star - middle position, aligned vertically with first */}
+      {/* Second star */}
       <motion.div
         className="relative -translate-y-4"
         animate={{
@@ -38,7 +38,7 @@ export default function StarGroup() {
         <Star size={16} />
       </motion.div>
 
-      {/* Third star - bottom position, curved towards button */}
+      {/* Third star */}
       <motion.div
         className="relative translate-x-8 translate-y-8"
         animate={{

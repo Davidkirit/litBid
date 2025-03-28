@@ -26,14 +26,14 @@ body {
   background: radial-gradient(
       circle at center,
       #ff1c5b 0%,
-      /* Vibrant red center */ #b20e3a 20%,
-      /* Deeper red transition */ #251434 45%,
-      /* Purple transition */ #0f1225 75% /* Dark background */
+      #b20e3a 20%,
+      #251434 45%,
+      #0f1225 75%
     ),
     radial-gradient(
       circle at center,
       rgba(255, 59, 154, 0.2) 0%,
-      /* Subtle red glow */ rgba(255, 59, 154, 0.1) 30%,
+      rgba(255, 59, 154, 0.1) 30%,
       transparent 60%
     );
   background-blend-mode: normal, overlay;
@@ -47,6 +47,11 @@ body {
   font-family: var(--font-pixel), monospace;
   -webkit-font-smoothing: none;
   -moz-osx-font-smoothing: none;
+}
+
+.pixel-border {
+  border: 8px solid transparent;
+  border-image: url("/pixel-border.png") 30 round;
 }
 
 @keyframes float-1 {

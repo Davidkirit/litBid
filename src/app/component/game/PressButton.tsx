@@ -2,10 +2,15 @@
 
 import { motion } from "framer-motion";
 import { useGame } from "../../context/GameContext";
+import { Press_Start_2P } from "next/font/google";
 
-const PressButton = () => {
+const pressStart2P = Press_Start_2P({
+  weight: "400",
+  subsets: ["latin"],
+});
+
+export default function PressButton() {
   const { gameState, handlePress } = useGame();
-  const { timer } = gameState;
 
   const onPress = async () => {
     try {
@@ -17,70 +22,44 @@ const PressButton = () => {
 
   return (
     <motion.div
-      className="relative w-48 h-48 filter drop-shadow-[0_0_40px_rgba(255,255,255,0.15)] cursor-pointer"
+      className={`${pressStart2P.className} relative w-48 h-48 cursor-pointer`}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       onClick={onPress}
+      style={{
+        filter: "drop-shadow(0 0 40px rgba(255,255,255,0.15))",
+      }}
     >
-      {/* White outer glow layer */}
+      {/* Outer white border layer */}
       <div
-        className="absolute inset-[-8px] bg-white/5 blur-xl"
+        className="absolute inset-0"
         style={{
           clipPath:
-            "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)",
-        }}
-      />
-
-      {/* Outer shadow */}
-      <div
-        className="absolute inset-0 bg-pink-900/50"
-        style={{
-          clipPath:
-            "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)",
-          transform: "translate(6px, 6px)",
-        }}
-      />
-
-      {/* Base pink layer */}
-      <div
-        className="absolute inset-0 bg-[#FF3B9A]"
-        style={{
-          clipPath:
-            "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)",
+            "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 70%, 0% 28%)",
+          backgroundColor: "white",
         }}
       >
-        {/* Inner white border */}
+        {/* Inner pink layer inset to create the border effect */}
         <div
-          className="absolute inset-[3px] bg-white/10"
+          className="absolute"
           style={{
+            top: "8px",
+            left: "8px",
+            right: "8px",
+            bottom: "8px",
             clipPath:
-              "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)",
+              "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 70%, 0% 28%)",
+            backgroundColor: "#FF3B9A",
           }}
         >
-          {/* Inner pink gradient */}
-          <div
-            className="absolute inset-[2px] bg-gradient-to-br from-pink-400 to-[#FF3B9A]"
-            style={{
-              clipPath:
-                "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 72%, 0% 28%)",
-            }}
-          >
-            {/* Text container */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative">
-                <span className="absolute text-pink-900 transform translate-x-[2px] translate-y-[2px] text-4xl pixel-font">
-                  PRESS
-                </span>
-                <span className="relative text-white text-4xl pixel-font z-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
-                  PRESS
-                </span>
-              </div>
-            </div>
+          {/* Text container */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-3xl text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+              PRESS
+            </span>
           </div>
         </div>
       </div>
     </motion.div>
   );
-};
-
-export default PressButton;
+}

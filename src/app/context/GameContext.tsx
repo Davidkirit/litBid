@@ -74,7 +74,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ...prev,
             isConnected: true,
             walletAddress: publicKey.toString(),
-            solBalance: balance / 1e9, // Convert lamports to SOL
+            solBalance: balance / 1e9,
           }));
         } catch (error) {
           console.error("Failed to get wallet balance:", error);
@@ -147,7 +147,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       throw new Error("Please connect your wallet first");
     }
 
-    // Calculate new max timer
     const newMaxTimer = Math.max(MIN_MAX_TIMER, gameState.maxTimer - 1);
 
     setGameState((prev) => ({

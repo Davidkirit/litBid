@@ -1,6 +1,12 @@
 "use client";
 
 import { useGame } from "../../context/GameContext";
+import { Press_Start_2P } from "next/font/google";
+
+const pressStart2P = Press_Start_2P({
+  weight: "400",
+  subsets: ["latin"],
+});
 
 export default function Countdown() {
   const { gameState } = useGame();
@@ -22,13 +28,15 @@ export default function Countdown() {
   };
 
   return (
-    <div className="h-full flex flex-col items-center justify-center">
-      <div className="text-4xl pixel-font text-white mb-2">
-        {formatTime(timer)}
+    <div
+      className={`h-full flex flex-col items-center justify-center space-y-4 ${pressStart2P.className}`}
+    >
+      <div className="text-sm tracking-[0.3em] text-white/90">
+        TIME REMAINING
       </div>
+      <div className="text-4xl text-white">{formatTime(timer)}</div>
       <div className="text-sm text-gray-400 text-center">
-        <div>Next press resets timer to {formatTime(maxTimer)}</div>
-        <div className="text-xs mt-1">and reduces max time by 1 second</div>
+        <div className="text-xs">Until the Game Ends Last Litbidder wins!</div>
       </div>
     </div>
   );
