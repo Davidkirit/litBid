@@ -3,10 +3,12 @@
 import Lottie from "lottie-react";
 import coinAnimation from "../coin/Animation - 1743072756056.json";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 
 interface CoinProps {
   index: number;
 }
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 export default function Coin({ index }: CoinProps) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
