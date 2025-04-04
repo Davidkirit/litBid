@@ -14,7 +14,7 @@ export default function Rightbody() {
   const [showPopup, setShowPopup] = useState(false);
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center bg-white/10 backdrop-blur-md rounded-lg p-4">
+    <div className="relative w-full h-full flex items-center justify-center bg-[#0B0A1E]/60 backdrop-blur-lg shadow-[0_0_10px_rgba(255,215,0,0.2)] rounded-lg p-4">
       {/* Main game section */}
       <div className="relative w-full h-full flex items-center justify-center">
         <motion.div
