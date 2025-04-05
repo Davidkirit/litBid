@@ -48,7 +48,7 @@ export default function Body() {
     <div className="min-h-screen flex justify-center items-center px-4 py-6 md:p-6">
       <div className="w-full max-w-[1100px]">
         <div className="relative">
-          {Array.from({ length: 20 }).map((_, index) => (
+          {Array.from({ length: 30 }).map((_, index) => (
             <Coin key={index} index={index} />
           ))}
 

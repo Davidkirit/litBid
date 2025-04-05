@@ -10,7 +10,7 @@ const pressStart2P = Press_Start_2P({
 });
 
 export default function PressButton() {
-  const { gameState, handlePress } = useGame();
+  const { handlePress } = useGame();
 
   const onPress = async () => {
     try {
@@ -22,43 +22,58 @@ export default function PressButton() {
 
   return (
     <motion.div
-      className={`${pressStart2P.className} relative w-48 h-48 cursor-pointer`}
+      onClick={onPress}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      onClick={onPress}
+      className="cursor-pointer"
       style={{
-        filter: "drop-shadow(0 0 40px rgba(255,255,255,0.15))",
+        width: "160px",
+        height: "160px",
+        imageRendering: "pixelated",
+        position: "relative",
       }}
     >
-      {/* Outer white border layer */}
+      {/* Pixel-style 8-sided circle using div blocks */}
       <div
-        className="absolute inset-0"
         style={{
-          clipPath:
-            "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 70%, 0% 28%)",
-          backgroundColor: "white",
+          position: "absolute",
+          inset: 0,
+          display: "grid",
+          placeItems: "center",
         }}
       >
-        {/* Inner pink layer inset to create the border effect */}
         <div
-          className="absolute"
           style={{
-            top: "8px",
-            left: "8px",
-            right: "8px",
-            bottom: "8px",
-            clipPath:
-              "polygon(28% 0%, 72% 0%, 100% 28%, 100% 72%, 72% 100%, 28% 100%, 0% 70%, 0% 28%)",
+            width: "100%",
+            height: "100%",
             backgroundColor: "#FF3B9A",
+            clipPath: `
+              polygon(
+                30% 0%,
+                70% 0%,
+                100% 30%,
+                100% 70%,
+                70% 100%,
+                30% 100%,
+                0% 70%,
+                0% 30%
+              )
+            `,
+            border: "4px solid white",
+            boxShadow: "0 0 10px rgba(255, 255, 255, 0.2)",
+          }}
+        ></div>
+
+        {/* Text */}
+        <span
+          className={`${pressStart2P.className} absolute text-white text-xl`}
+          style={{
+            textShadow: "0 0 2px #fff",
+            zIndex: 2,
           }}
         >
-          {/* Text container */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
-              PRESS
-            </span>
-          </div>
-        </div>
+          PRESS
+        </span>
       </div>
     </motion.div>
   );
