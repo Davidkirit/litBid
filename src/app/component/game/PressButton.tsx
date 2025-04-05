@@ -25,56 +25,36 @@ export default function PressButton() {
       onClick={onPress}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="cursor-pointer"
+      className="cursor-pointer relative flex items-center justify-center"
       style={{
-        width: "160px",
-        height: "160px",
-        imageRendering: "pixelated",
-        position: "relative",
+        width: "200px",
+        height: "200px",
+        background: "transparent",
       }}
     >
-      {/* Pixel-style 8-sided circle using div blocks */}
-      <div
+      <img
+        src="/pixel%20btn2%201.png"
+        alt="Press Button"
         style={{
-          position: "absolute",
-          inset: 0,
-          display: "grid",
-          placeItems: "center",
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          imageRendering: "pixelated",
+          border: "none",
+          outline: "none",
+          backgroundColor: "transparent",
+        }}
+      />
+
+      <span
+        className={`${pressStart2P.className} absolute text-white text-2xl`}
+        style={{
+          textShadow: "0 0 2px #fff",
+          pointerEvents: "none",
         }}
       >
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            backgroundColor: "#FF3B9A",
-            clipPath: `
-              polygon(
-                30% 0%,
-                70% 0%,
-                100% 30%,
-                100% 70%,
-                70% 100%,
-                30% 100%,
-                0% 70%,
-                0% 30%
-              )
-            `,
-            border: "4px solid white",
-            boxShadow: "0 0 10px rgba(255, 255, 255, 0.2)",
-          }}
-        ></div>
-
-        {/* Text */}
-        <span
-          className={`${pressStart2P.className} absolute text-white text-xl`}
-          style={{
-            textShadow: "0 0 2px #fff",
-            zIndex: 2,
-          }}
-        >
-          PRESS
-        </span>
-      </div>
+        PRESS
+      </span>
     </motion.div>
   );
 }
