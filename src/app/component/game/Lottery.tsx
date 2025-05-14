@@ -1,18 +1,23 @@
 "use client";
 
+import { useGame } from "../../context/GameContext";
 import { Press_Start_2P } from "next/font/google";
-import { Inter } from "next/font/google";
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
   subsets: ["latin"],
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-});
-
 export default function LotteryPoolPage() {
+  const { currentValue } = useGame(); // Access the shared state from GameContext
+
+  const formatValue = (value: number) => {
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}K`; // Show value in thousands with "K"
+    }
+    return value.toFixed(1); // Show value normally
+  };
+
   return (
     <div className="flex flex-col items-center text-center px-4 sm:px-6 md:px-8 w-full max-w-full overflow-hidden">
       {/* Heading */}
@@ -44,11 +49,10 @@ export default function LotteryPoolPage() {
             `,
           }}
         >
-          30.0K
+          {formatValue(currentValue)}
         </span>
       </div>
 
-      {/* Token Info */}
       <div
         className={`${pressStart2P.className} flex flex-col items-center gap-1 sm:gap-2 w-full`}
       >

@@ -37,6 +37,8 @@ interface GameContextType {
   handlePress: () => Promise<void>;
   showWalletModal: boolean;
   setShowWalletModal: (show: boolean) => void;
+  currentValue: number;
+  incrementValue: (amount: number) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -48,9 +50,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [currentValue, setCurrentValue] = useState(0.0); // Shared state for the lottery pool value
+
+  const incrementValue = (amount: number) => {
+    setCurrentValue((prev) => parseFloat((prev + amount).toFixed(1))); // Increment and round to 1 decimal place
+  };
 
   const [gameState, setGameState] = useState<GameState>({
-    poolAmount: 1,
+    poolAmount: 0,
     currentBid: 0.1,
     timer: INITIAL_MAX_TIMER,
     maxTimer: INITIAL_MAX_TIMER,
@@ -170,6 +177,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         handlePress,
         showWalletModal,
         setShowWalletModal,
+        currentValue,
+        incrementValue,
       }}
     >
       {children}

@@ -17,11 +17,11 @@ export default function PressButton() {
   const { publicKey } = useWallet();
   const { placeBid: onChainPlaceBid, callingSmartContract } =
     useSolanaContracts();
-  const { placeBid: contextPlaceBid } = useGame();
+  const { placeBid: contextPlaceBid, incrementValue } = useGame();
 
   const [amount, setAmount] = useState(0.1);
 
-  const handlePlaceBid = async () => {
+  const handlePress = async () => {
     if (!publicKey) {
       toast.error("Connect your wallet first");
       return;
@@ -32,6 +32,9 @@ export default function PressButton() {
 
     if (txid) {
       toast.success("Bid placed successfully!");
+
+      // Increment the value in the GameContext
+      incrementValue(amount);
 
       await contextPlaceBid(amount);
 
@@ -52,7 +55,7 @@ export default function PressButton() {
 
   return (
     <motion.div
-      onClick={handlePlaceBid}
+      onClick={handlePress}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       className={`cursor-pointer relative flex items-center justify-center ${
