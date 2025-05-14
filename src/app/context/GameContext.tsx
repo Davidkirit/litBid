@@ -25,6 +25,7 @@ interface GameState {
   isConnected: boolean;
   walletAddress: string | null;
   solBalance: number | null;
+  firstBidPlaced: boolean;
 }
 
 interface GameContextType {
@@ -62,9 +63,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     isConnected: false,
     walletAddress: null,
     solBalance: null,
+    firstBidPlaced: false,
   });
 
-  // Update wallet connection status
   useEffect(() => {
     const updateWalletStatus = async () => {
       if (connected && publicKey) {
@@ -119,6 +120,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       poolAmount: newPoolAmount,
       currentBid: calculateMinimumBid(newPoolAmount),
       timer: 1800,
+      firstBidPlaced: true,
     }));
   };
 

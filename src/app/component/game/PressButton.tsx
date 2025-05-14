@@ -1,8 +1,12 @@
 "use client";
-
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useGame } from "../../context/GameContext";
+
 import { Press_Start_2P } from "next/font/google";
+import { useWallet } from "@solana/wallet-adapter-react";
+import useSolanaContracts from "../../hooks/useSolanaContracts";
+import { toast } from "react-toastify";
+import { useGame } from "../../context/GameContext";
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
@@ -10,22 +14,50 @@ const pressStart2P = Press_Start_2P({
 });
 
 export default function PressButton() {
-  const { handlePress } = useGame();
+  const { publicKey } = useWallet();
+  const { placeBid: onChainPlaceBid, callingSmartContract } =
+    useSolanaContracts();
+  const { placeBid: contextPlaceBid } = useGame();
 
-  const onPress = async () => {
-    try {
-      await handlePress();
-    } catch (error) {
-      console.error("Failed to press:", error);
+  const [amount, setAmount] = useState(0.1);
+
+  const handlePlaceBid = async () => {
+    if (!publicKey) {
+      toast.error("Connect your wallet first");
+      return;
+    }
+
+    const lamports = amount * 1e9; // Convert SOL to lamports
+    const txid = await onChainPlaceBid(lamports, publicKey);
+
+    if (txid) {
+      toast.success("Bid placed successfully!");
+
+      await contextPlaceBid(amount);
+
+      toast.info(
+        <a
+          href={`https://explorer.solana.com/tx/${txid}?cluster=devnet`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          View transaction on Solana Explorer
+        </a>
+      );
+    } else {
+      toast.error("Failed to place bid.");
     }
   };
 
   return (
     <motion.div
-      onClick={onPress}
+      onClick={handlePlaceBid}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className="cursor-pointer relative flex items-center justify-center"
+      className={`cursor-pointer relative flex items-center justify-center ${
+        callingSmartContract ? "opacity-50 pointer-events-none" : ""
+      }`}
       style={{
         width: "200px",
         height: "200px",

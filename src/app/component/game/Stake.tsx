@@ -1,31 +1,66 @@
 "use client";
 
-import { useGame } from "../../context/GameContext";
 import { useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import useSolanaContracts from "../../hooks/useSolanaContracts";
+import { toast } from "react-toastify";
 
 export default function Stake() {
-  const { gameState, stakeTokens } = useGame();
-  const { userStake, userScore, referralRewards } = gameState;
+  const { stake: onChainStake, callingSmartContract } = useSolanaContracts();
+  const { publicKey } = useWallet();
+
   const [isLoading, setIsLoading] = useState(false);
   const [solAmount, setSolAmount] = useState("");
+  const [userStake, setUserStake] = useState(0);
+  const [userScore, setUserScore] = useState(0);
+  const [referralRewards, setReferralRewards] = useState(0);
 
   const handleStake = async () => {
     const amount = parseFloat(solAmount);
+    if (!publicKey) {
+      alert("Connect your wallet first.");
+      return;
+    }
     if (isNaN(amount) || amount <= 0) {
       alert("Please enter a valid amount");
       return;
     }
 
     setIsLoading(true);
-    try {
-      await stakeTokens(amount);
-      setSolAmount("");
-    } catch (error) {
-      console.error("Failed to stake tokens:", error);
-      alert("Failed to stake tokens. Please try again.");
-    } finally {
-      setIsLoading(false);
+    const lamports = amount * 1_000_000_000; // Convert SOL to lamports
+    const txid = await onChainStake(lamports, publicKey);
+
+    if (txid) {
+      toast.success("Stake Approved!");
+
+      toast.info(
+        <a
+          href={`https://explorer.solana.com/tx/${txid}?cluster=devnet`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          View transaction on Solana Explorer
+        </a>
+      );
+    } else {
+      toast.error("Failed to stake.");
     }
+    setSolAmount("");
+
+    // Optional: Fetch and update user info after stake
+    //   const user = await fetchUserAccount(publicKey);
+    //   if (user) {
+    //     setUserStake(user.stakeAmount / 1_000_000_000);
+    //     setUserScore(user.score);
+    //     setReferralRewards(user.referralRewards / 1_000_000_000);
+    //   }
+    // } catch (error) {
+    //   console.error("Failed to stake tokens:", error);
+    //   alert("Failed to stake tokens. Please try again.");
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   const handlePercentage = (percentage: number) => {
@@ -62,7 +97,6 @@ export default function Stake() {
           AMOUNT
         </div>
 
-        {/* SOL Amount Input */}
         <div className="bg-[#1a1b35] p-1.5 sm:p-3 rounded-lg flex justify-between items-center">
           <input
             type="number"
@@ -76,7 +110,6 @@ export default function Stake() {
           </span>
         </div>
 
-        {/* Balance and Percentages */}
         <div className="flex justify-between items-center">
           <span className="text-gray-500 pixel-font text-[8px] sm:text-xs">
             BALANCE: {userStake.toFixed(2)} SOL
@@ -114,10 +147,6 @@ export default function Stake() {
           }`}
         >
           {isLoading ? "PROCESSING..." : "PROCEED"}
-        </button>
-
-        <button className="w-full text-[#FFD700] hover:text-yellow-400 pixel-font py-0.5 sm:py-1 transition-colors text-[8px] sm:text-xs">
-          BUY LITBID
         </button>
       </div>
 
