@@ -10,8 +10,7 @@ import {
 } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useConnection } from "@solana/wallet-adapter-react";
-import useSolanaContracts from "../hooks/useSolanaContracts"; // Import useSolanaContracts
-
+import useSolanaContracts from "../hooks/useSolanaContracts";
 interface GameState {
   poolAmount: number;
   currentBid: number;
@@ -32,7 +31,7 @@ interface GameState {
 interface GameContextType {
   gameState: GameState;
   setGameState: React.Dispatch<React.SetStateAction<GameState>>;
-  fetchGlobalState: () => Promise<void>; // Add fetchGlobalState to the context
+  fetchGlobalState: () => Promise<void>;
   placeBid: (amount: number) => Promise<void>;
   stakeTokens: (amount: number) => Promise<void>;
   connectWallet: () => Promise<void>;
@@ -56,8 +55,8 @@ const SCORE_HALVING_EPOCHS = 90;
 export function GameProvider({ children }: { children: ReactNode }) {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
-  const { fetchGlobalState: fetchGlobalStateFromContract } =
-    useSolanaContracts(); // Destructure fetchGlobalState
+  const { fetchGlobalState: fetchGlobalStateFromContract, createUser } =
+    useSolanaContracts();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [currentValue, setCurrentValue] = useState(0.0);
   const incrementValue = (amount: number) => {
@@ -100,16 +99,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         isEarlyBird: globalState.isEarlyBird,
       }));
 
-      console.log("Global state fetched successfully:", globalState);
+      // console.log("Global state fetched successfully:", globalState);
     } catch (error) {
       console.error("Failed to fetch global state:", error);
     }
   };
-
   useEffect(() => {
     const updateWalletStatus = async () => {
       if (connected && publicKey) {
         try {
+          // Ensure user account exists on the program
+          await createUser(publicKey);
+
           const balance = await connection.getBalance(publicKey);
           setGameState((prev) => ({
             ...prev,
@@ -118,7 +119,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             solBalance: balance / 1e9,
           }));
         } catch (error) {
-          console.error("Failed to get wallet balance:", error);
+          console.error("Failed to get wallet balance or create user:", error);
         }
       } else {
         setGameState((prev) => ({
