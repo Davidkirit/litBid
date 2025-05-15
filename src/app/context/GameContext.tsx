@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useConnection } from "@solana/wallet-adapter-react";
+import useSolanaContracts from "../hooks/useSolanaContracts"; // Import useSolanaContracts
 
 interface GameState {
   poolAmount: number;
@@ -30,11 +31,15 @@ interface GameState {
 
 interface GameContextType {
   gameState: GameState;
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>;
+  fetchGlobalState: () => Promise<void>; // Add fetchGlobalState to the context
   placeBid: (amount: number) => Promise<void>;
   stakeTokens: (amount: number) => Promise<void>;
   connectWallet: () => Promise<void>;
   getReferralLink: () => string;
   handlePress: () => Promise<void>;
+  calculateRewards: () => void;
+  distributeStakingPool: () => void;
   showWalletModal: boolean;
   setShowWalletModal: (show: boolean) => void;
   currentValue: number;
@@ -43,12 +48,16 @@ interface GameContextType {
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-const INITIAL_MAX_TIMER = 3600; // 1 hour in seconds
-const MIN_MAX_TIMER = 60; // 1 minute in seconds
+const INITIAL_MAX_TIMER = 1800; // 30 minutes in seconds
+const MIN_BID_PERCENTAGE = 0.01; // 1% of the current jackpot
+const EARLY_BIRD_EPOCHS = 30;
+const SCORE_HALVING_EPOCHS = 90;
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
+  const { fetchGlobalState: fetchGlobalStateFromContract } =
+    useSolanaContracts(); // Destructure fetchGlobalState
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [currentValue, setCurrentValue] = useState(0.0); // Shared state for the lottery pool value
 
@@ -59,8 +68,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [gameState, setGameState] = useState<GameState>({
     poolAmount: 0,
     currentBid: 0.1,
-    timer: INITIAL_MAX_TIMER,
-    maxTimer: INITIAL_MAX_TIMER,
+    timer: 3600, // 1 hour in seconds
+    maxTimer: 3600,
     epoch: 1,
     isEarlyBird: true,
     userScore: 0,
@@ -72,6 +81,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
     solBalance: null,
     firstBidPlaced: false,
   });
+
+  // Fetch global state from the smart contract
+  const fetchGlobalState = async () => {
+    try {
+      const globalState = await fetchGlobalStateFromContract();
+      console.log("Global state:", globalState);
+
+      if (!globalState) {
+        console.error("Global state is null (possibly not initialized yet).");
+        return;
+      }
+
+      setGameState((prev) => ({
+        ...prev,
+        poolAmount: globalState.poolAmount / 1e9,
+        currentBid: globalState.currentBid / 1e9,
+        timer: globalState.timer,
+        epoch: globalState.epoch,
+        isEarlyBird: globalState.isEarlyBird,
+      }));
+
+      console.log("Global state fetched successfully:", globalState);
+    } catch (error) {
+      console.error("Failed to fetch global state:", error);
+    }
+  };
 
   useEffect(() => {
     const updateWalletStatus = async () => {
@@ -115,24 +150,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Handle timer reaching zero
   useEffect(() => {
     if (gameState.timer === 0) {
-      // Handle game end logic here
       console.log("Game ended - last presser wins!");
     }
   }, [gameState.timer]);
 
+  const calculateMinimumBid = (pool: number) => {
+    return pool * MIN_BID_PERCENTAGE;
+  };
+
   const placeBid = async (amount: number) => {
-    const newPoolAmount = gameState.poolAmount + amount;
+    const newPoolAmount = gameState.poolAmount + amount * 0.8; // 80% to jackpot
+    const referralRewards = amount * 0.02; // 2% to referrer
+    const stakingPool = amount * 0.1; // 10% to staking pool
+    const treasury = amount * 0.08; // 8% to treasury
+
     setGameState((prev) => ({
       ...prev,
       poolAmount: newPoolAmount,
       currentBid: calculateMinimumBid(newPoolAmount),
-      timer: 1800,
+      timer: INITIAL_MAX_TIMER,
       firstBidPlaced: true,
+      referralRewards: prev.referralRewards + referralRewards,
     }));
-  };
 
-  const calculateMinimumBid = (pool: number) => {
-    return pool * 0.1;
+    console.log(
+      `Bid placed: ${amount} SOL. Updated pool: ${newPoolAmount} SOL.`
+    );
   };
 
   const stakeTokens = async (amount: number) => {
@@ -156,7 +199,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       throw new Error("Please connect your wallet first");
     }
 
-    const newMaxTimer = Math.max(MIN_MAX_TIMER, gameState.maxTimer - 1);
+    const newMaxTimer = Math.max(INITIAL_MAX_TIMER, gameState.maxTimer - 1);
 
     setGameState((prev) => ({
       ...prev,
@@ -166,15 +209,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const calculateRewards = () => {
+    // Logic to calculate rewards for staking pool and referrals
+    console.log("Calculating rewards...");
+  };
+
+  const distributeStakingPool = () => {
+    // Logic to distribute staking pool based on scores
+    console.log("Distributing staking pool...");
+  };
+
   return (
     <GameContext.Provider
       value={{
         gameState,
+        setGameState,
+        fetchGlobalState,
         placeBid,
         stakeTokens,
         connectWallet,
         getReferralLink,
         handlePress,
+        calculateRewards,
+        distributeStakingPool,
         showWalletModal,
         setShowWalletModal,
         currentValue,

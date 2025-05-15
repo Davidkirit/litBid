@@ -17,9 +17,7 @@ export default function PressButton() {
   const { publicKey } = useWallet();
   const { placeBid: onChainPlaceBid, callingSmartContract } =
     useSolanaContracts();
-  const { placeBid: contextPlaceBid, incrementValue } = useGame();
-
-  const [amount, setAmount] = useState(0.1);
+  const { gameState, placeBid: contextPlaceBid, incrementValue } = useGame();
 
   const handlePress = async () => {
     if (!publicKey) {
@@ -27,29 +25,37 @@ export default function PressButton() {
       return;
     }
 
+    const amount = gameState.currentBid; // Get the current bid amount
     const lamports = amount * 1e9; // Convert SOL to lamports
-    const txid = await onChainPlaceBid(lamports, publicKey);
 
-    if (txid) {
-      toast.success("Bid placed successfully!");
+    try {
+      const txid = await onChainPlaceBid(lamports, publicKey);
 
-      // Increment the value in the GameContext
-      incrementValue(amount);
+      if (txid) {
+        toast.success("Bid placed successfully!");
 
-      await contextPlaceBid(amount);
+        // Increment the value in the GameContext
+        incrementValue(amount);
 
-      toast.info(
-        <a
-          href={`https://explorer.solana.com/tx/${txid}?cluster=devnet`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline"
-        >
-          View transaction on Solana Explorer
-        </a>
-      );
-    } else {
-      toast.error("Failed to place bid.");
+        // Update the game state in the context
+        await contextPlaceBid(amount);
+
+        toast.info(
+          <a
+            href={`https://explorer.solana.com/tx/${txid}?cluster=devnet`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            View transaction on Solana Explorer
+          </a>
+        );
+      } else {
+        toast.error("Failed to place bid.");
+      }
+    } catch (error) {
+      toast.error("An error occurred while placing the bid.");
+      console.error(error);
     }
   };
 

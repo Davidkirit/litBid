@@ -41,7 +41,7 @@ export default function Body() {
   };
 
   if (!isMounted) {
-    return null; // or a loading spinner
+    return null;
   }
 
   return (
