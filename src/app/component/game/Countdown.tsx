@@ -15,21 +15,20 @@ export default function Countdown() {
 
   const [displayTimer, setDisplayTimer] = useState(timer);
 
-  // Sync local timer with global timer
   useEffect(() => {
     setDisplayTimer(timer);
   }, [timer]);
 
   // Handle countdown logic
   useEffect(() => {
-    if (!firstBidPlaced) return; // Wait for the first bid to be placed
+    if (!firstBidPlaced) return;
 
     const interval = setInterval(() => {
       setDisplayTimer((prev) => {
         if (prev > 0) {
-          return prev - 1; // Decrement timer by 1 second
+          return prev - 1;
         } else {
-          clearInterval(interval); // Stop the timer when it reaches 0
+          clearInterval(interval);
           return 0;
         }
       });
@@ -41,14 +40,13 @@ export default function Countdown() {
   // Reset timer logic when a new bid is placed
   useEffect(() => {
     if (firstBidPlaced && timer > 1800) {
-      // If the timer is greater than 30 minutes, do not reset
       setDisplayTimer(timer);
     } else if (firstBidPlaced && timer <= 1800) {
       // If the timer is less than or equal to 30 minutes, reset to 30 minutes
       setDisplayTimer(1800);
       setGameState((prev) => ({
         ...prev,
-        timer: 1800, // Update the global timer
+        timer: 1800,
       }));
     }
   }, [timer, firstBidPlaced, setGameState]);

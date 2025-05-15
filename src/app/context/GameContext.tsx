@@ -59,16 +59,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const { fetchGlobalState: fetchGlobalStateFromContract } =
     useSolanaContracts(); // Destructure fetchGlobalState
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const [currentValue, setCurrentValue] = useState(0.0); // Shared state for the lottery pool value
-
+  const [currentValue, setCurrentValue] = useState(0.0);
   const incrementValue = (amount: number) => {
-    setCurrentValue((prev) => parseFloat((prev + amount).toFixed(1))); // Increment and round to 1 decimal place
+    setCurrentValue((prev) => parseFloat((prev + amount).toFixed(1)));
   };
 
   const [gameState, setGameState] = useState<GameState>({
     poolAmount: 0,
     currentBid: 0.1,
-    timer: 3600, // 1 hour in seconds
+    timer: 3600,
     maxTimer: 3600,
     epoch: 1,
     isEarlyBird: true,
@@ -86,7 +85,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const fetchGlobalState = async () => {
     try {
       const globalState = await fetchGlobalStateFromContract();
-      console.log("Global state:", globalState);
 
       if (!globalState) {
         console.error("Global state is null (possibly not initialized yet).");
