@@ -34,10 +34,8 @@ export default function PressButton() {
       if (txid) {
         toast.success("Bid placed successfully!");
 
-        // Increment the value in the GameContext
         incrementValue(amount);
 
-        // Update the game state in the context
         await contextPlaceBid(amount);
 
         toast.info(

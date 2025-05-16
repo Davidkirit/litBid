@@ -1,368 +1,342 @@
 {
-    "version": "0.1.0",
-    "name": "simple_litbid",
-    "instructions": [
-      {
-        "name": "initialize",
-        "accounts": [
+  "version": "0.1.0",
+  "name": "simple_litbid",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "globalTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "jackpotAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakingPoolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "globalTreasury",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "placeBid",
+      "docs": [
+        "Place a bid:",
+        "- Checks minimum bid = 1% of current jackpot.",
+        "- Finalizes epochs if needed.",
+        "- Distributes funds: 80% jackpot, 10% staking pool, 8% treasury, 2% referrer.",
+        "- If less than 30 mins remain, reset to 30 mins.",
+        "- Updates last_bidder.",
+        "- Marks referral active if applicable.",
+        "- Updates scores for both the bidder and their referrer to reward activity and referrals."
+      ],
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "The *bidder's* user account PDA. Always `[b\"user\", user_authority.key().as_ref()]`."
+          ]
+        },
+        {
+          "name": "userAuthority",
+          "isMut": true,
+          "isSigner": true,
+          "docs": ["The *bidder's* wallet (signer)."]
+        },
+        {
+          "name": "globalTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "jackpotAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakingPoolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": ["The System Program for SOL transfers."]
+        }
+      ],
+      "args": [
+        {
+          "name": "lamportsOffered",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "stake",
+      "docs": [
+        "Stake funds:",
+        "- Updates the user's staked_amount and global_state.total_staked.",
+        "- Updates user and global scores to reward staking activity."
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": ["The user authority who is staking the funds."]
+        },
+        {
+          "name": "stakingPoolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": ["System program"]
+        }
+      ],
+      "args": [
+        {
+          "name": "lamportsToStake",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "claimRewards",
+      "docs": [
+        "Claim accumulated rewards with epoch finalization and score halving"
+      ],
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakingPoolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userAuthority",
+          "isMut": false,
+          "isSigner": true,
+          "docs": ["The user authority who is claiming the rewards."]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": ["The system program for handling transfers."]
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GlobalState",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            "name": "globalState",
-            "isMut": true,
-            "isSigner": false
+            "name": "lastBidTimestamp",
+            "type": "i64"
           },
           {
-            "name": "payer",
-            "isMut": true,
-            "isSigner": true
+            "name": "currentJackpot",
+            "type": "u64"
           },
           {
-            "name": "globalTreasury",
-            "isMut": true,
-            "isSigner": false
+            "name": "stakingPool",
+            "type": "u64"
           },
           {
-            "name": "jackpotAccount",
-            "isMut": true,
-            "isSigner": false
+            "name": "totalScoreSum",
+            "type": "u128"
           },
           {
-            "name": "stakingPoolAccount",
-            "isMut": true,
-            "isSigner": false
+            "name": "totalStaked",
+            "type": "u64"
           },
           {
-            "name": "systemProgram",
-            "isMut": false,
-            "isSigner": false
-          }
-        ],
-        "args": [
+            "name": "lastBidTimerEnd",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "lastBidder",
+            "type": {
+              "option": "publicKey"
+            }
+          },
           {
             "name": "globalTreasury",
             "type": "publicKey"
           }
         ]
-      },
-      {
-        "name": "placeBid",
-        "docs": [
-          "Place a bid:",
-          "- Checks minimum bid = 1% of current jackpot.",
-          "- Finalizes epochs if needed.",
-          "- Distributes funds: 80% jackpot, 10% staking pool, 8% treasury, 2% referrer.",
-          "- If less than 30 mins remain, reset to 30 mins.",
-          "- Updates last_bidder.",
-          "- Marks referral active if applicable.",
-          "- Updates scores for both the bidder and their referrer to reward activity and referrals."
-        ],
-        "accounts": [
+      }
+    },
+    {
+      "name": "UserAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
           {
-            "name": "globalState",
-            "isMut": true,
-            "isSigner": false
+            "name": "owner",
+            "type": "publicKey"
           },
           {
-            "name": "user",
-            "isMut": true,
-            "isSigner": false,
-            "docs": [
-              "The *bidder's* user account PDA. Always `[b\"user\", user_authority.key().as_ref()]`."
-            ]
+            "name": "score",
+            "type": "u64"
           },
           {
-            "name": "userAuthority",
-            "isMut": true,
-            "isSigner": true,
-            "docs": [
-              "The *bidder's* wallet (signer)."
-            ]
-          },
-          {
-            "name": "globalTreasury",
-            "isMut": true,
-            "isSigner": false
-          },
-          {
-            "name": "jackpotAccount",
-            "isMut": true,
-            "isSigner": false
-          },
-          {
-            "name": "stakingPoolAccount",
-            "isMut": true,
-            "isSigner": false
-          },
-          {
-            "name": "referrerAccount",
-            "isMut": true,
-            "isSigner": false,
-            "isOptional": true
+            "name": "stakedAmount",
+            "type": "u64"
           },
           {
             "name": "referrer",
-            "isMut": false,
-            "isSigner": false,
-            "docs": [
-              "The *referrer's* public key (where we send 2%). Could be the same as user_authority (self-ref) or default (no ref)."
-            ]
+            "type": {
+              "option": "publicKey"
+            }
           },
           {
-            "name": "systemProgram",
-            "isMut": false,
-            "isSigner": false,
-            "docs": [
-              "The System Program for SOL transfers."
-            ]
-          }
-        ],
-        "args": [
-          {
-            "name": "lamportsOffered",
-            "type": "u64"
+            "name": "activeReferral",
+            "type": "bool"
           }
         ]
-      },
-      {
-        "name": "stake",
-        "docs": [
-          "Stake funds:",
-          "- Updates the user's staked_amount and global_state.total_staked.",
-          "- Updates user and global scores to reward staking activity."
-        ],
-        "accounts": [
-          {
-            "name": "user",
-            "isMut": true,
-            "isSigner": false
-          },
-          {
-            "name": "userAuthority",
-            "isMut": false,
-            "isSigner": true,
-            "docs": [
-              "The user authority who is staking the funds."
-            ]
-          },
-          {
-            "name": "stakingPoolAccount",
-            "isMut": true,
-            "isSigner": false
-          },
-          {
-            "name": "globalState",
-            "isMut": true,
-            "isSigner": false
-          },
-          {
-            "name": "systemProgram",
-            "isMut": false,
-            "isSigner": false,
-            "docs": [
-              "System program"
-            ]
-          }
-        ],
-        "args": [
-          {
-            "name": "lamportsToStake",
-            "type": "u64"
-          }
-        ]
-      },
-      {
-        "name": "claimRewards",
-        "docs": [
-          "Claim accumulated rewards with epoch finalization and score halving"
-        ],
-        "accounts": [
-          {
-            "name": "globalState",
-            "isMut": true,
-            "isSigner": false
-          },
-          {
-            "name": "user",
-            "isMut": true,
-            "isSigner": false
-          },
-          {
-            "name": "stakingPoolAccount",
-            "isMut": true,
-            "isSigner": false
-          },
-          {
-            "name": "userAuthority",
-            "isMut": false,
-            "isSigner": true,
-            "docs": [
-              "The user authority who is claiming the rewards."
-            ]
-          },
-          {
-            "name": "systemProgram",
-            "isMut": false,
-            "isSigner": false,
-            "docs": [
-              "The system program for handling transfers."
-            ]
-          }
-        ],
-        "args": []
       }
-    ],
-    "accounts": [
-      {
-        "name": "GlobalState",
-        "type": {
-          "kind": "struct",
-          "fields": [
-            {
-              "name": "lastBidTimestamp",
-              "type": "i64"
-            },
-            {
-              "name": "currentJackpot",
-              "type": "u64"
-            },
-            {
-              "name": "stakingPool",
-              "type": "u64"
-            },
-            {
-              "name": "totalScoreSum",
-              "type": "u128"
-            },
-            {
-              "name": "totalStaked",
-              "type": "u64"
-            },
-            {
-              "name": "lastBidTimerEnd",
-              "type": {
-                "option": "i64"
-              }
-            },
-            {
-              "name": "lastBidder",
-              "type": {
-                "option": "publicKey"
-              }
-            },
-            {
-              "name": "globalTreasury",
-              "type": "publicKey"
-            }
-          ]
-        }
-      },
-      {
-        "name": "UserAccount",
-        "type": {
-          "kind": "struct",
-          "fields": [
-            {
-              "name": "owner",
-              "type": "publicKey"
-            },
-            {
-              "name": "score",
-              "type": "u64"
-            },
-            {
-              "name": "stakedAmount",
-              "type": "u64"
-            },
-            {
-              "name": "referrer",
-              "type": {
-                "option": "publicKey"
-              }
-            },
-            {
-              "name": "activeReferral",
-              "type": "bool"
-            }
-          ]
-        }
-      },
-      {
-        "name": "JackpotAccount",
-        "type": {
-          "kind": "struct",
-          "fields": []
-        }
-      },
-      {
-        "name": "StakingPoolAccount",
-        "type": {
-          "kind": "struct",
-          "fields": []
-        }
+    },
+    {
+      "name": "JackpotAccount",
+      "type": {
+        "kind": "struct",
+        "fields": []
       }
-    ],
-    "errors": [
-      {
-        "code": 6000,
-        "name": "BidTooLow",
-        "msg": "Bid is too low"
-      },
-      {
-        "code": 6001,
-        "name": "Overflow",
-        "msg": "Overflow"
-      },
-      {
-        "code": 6002,
-        "name": "MissingReferrerAccount",
-        "msg": "Missing Referrer Account"
-      },
-      {
-        "code": 6003,
-        "name": "InvalidReferrerAccount",
-        "msg": "Invalid Referrer Account"
-      },
-      {
-        "code": 6004,
-        "name": "NoLastBidder",
-        "msg": "No Last Bidder"
-      },
-      {
-        "code": 6005,
-        "name": "EpochNotEnded",
-        "msg": "Epoch not ended"
-      },
-      {
-        "code": 6006,
-        "name": "EpochAlreadyEnded",
-        "msg": "Epoch already ended (timer expired)"
-      },
-      {
-        "code": 6007,
-        "name": "TimerNotExpired",
-        "msg": "Timer not expired"
-      },
-      {
-        "code": 6008,
-        "name": "TimerExpired",
-        "msg": "Timer expired"
-      },
-      {
-        "code": 6009,
-        "name": "InsufficientFunds",
-        "msg": "Insufficient Funds"
-      },
-      {
-        "code": 6010,
-        "name": "NoRewardsToClaim",
-        "msg": "No Rewards To Claim"
-      },
-      {
-        "code": 6011,
-        "name": "InconsistentStakingPool",
-        "msg": "Inconsistent Staking Pool"
+    },
+    {
+      "name": "StakingPoolAccount",
+      "type": {
+        "kind": "struct",
+        "fields": []
       }
-    ],
-    "metadata": {
-      "address": "5LqK7NiKKBif3JL5dwcWJAyRgQWE8kR4kWB6f76kfZ7p"
     }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "BidTooLow",
+      "msg": "Bid is too low"
+    },
+    {
+      "code": 6001,
+      "name": "Overflow",
+      "msg": "Overflow"
+    },
+    {
+      "code": 6002,
+      "name": "MissingReferrerAccount",
+      "msg": "Missing Referrer Account"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidReferrerAccount",
+      "msg": "Invalid Referrer Account"
+    },
+    {
+      "code": 6004,
+      "name": "NoLastBidder",
+      "msg": "No Last Bidder"
+    },
+    {
+      "code": 6005,
+      "name": "EpochNotEnded",
+      "msg": "Epoch not ended"
+    },
+    {
+      "code": 6006,
+      "name": "EpochAlreadyEnded",
+      "msg": "Epoch already ended (timer expired)"
+    },
+    {
+      "code": 6007,
+      "name": "TimerNotExpired",
+      "msg": "Timer not expired"
+    },
+    {
+      "code": 6008,
+      "name": "TimerExpired",
+      "msg": "Timer expired"
+    },
+    {
+      "code": 6009,
+      "name": "InsufficientFunds",
+      "msg": "Insufficient Funds"
+    },
+    {
+      "code": 6010,
+      "name": "NoRewardsToClaim",
+      "msg": "No Rewards To Claim"
+    },
+    {
+      "code": 6011,
+      "name": "InconsistentStakingPool",
+      "msg": "Inconsistent Staking Pool"
+    }
+  ],
+  "metadata": {
+    "address": "5LqK7NiKKBif3JL5dwcWJAyRgQWE8kR4kWB6f76kfZ7p"
   }
+}

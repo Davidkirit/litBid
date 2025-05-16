@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 import { useGame } from "../../context/GameContext";
 
 export default function Stake() {
-  const { stake: onChainStake, callingSmartContract } = useSolanaContracts(); // Fetch the stake function
+  const { stake: onChainStake, callingSmartContract } = useSolanaContracts();
   const { publicKey } = useWallet();
   const { gameState, updateRewards, fetchGlobalState } = useGame();
 
@@ -16,13 +16,12 @@ export default function Stake() {
   const [stakedTokens, setStakedTokens] = useState(0); // User's staked tokens
   const [solAmount, setSolAmount] = useState(""); // Amount to stake
 
-
   useEffect(() => {
     const fetchUserData = async () => {
       if (!publicKey) return;
 
       try {
-        const userAccount = await onChainStake.fetchUserAccount(publicKey); // Fetch user data from the smart contract
+        const userAccount = await onChainStake.fetchUserAccount(publicKey);
         setReceiptTokens(userAccount.receiptTokens / 1e9); // Convert lamports to SOL
         setStakedTokens(userAccount.stakedTokens / 1e9);
       } catch (error) {
@@ -35,7 +34,7 @@ export default function Stake() {
 
   useEffect(() => {
     const fetchData = async () => {
-      await fetchGlobalState(); 
+      await fetchGlobalState();
     };
 
     fetchData();
@@ -55,7 +54,7 @@ export default function Stake() {
     setIsLoading(true);
     try {
       const lamports = amount * 1e9; // Convert SOL to lamports
-      const txid = await onChainStake(lamports, publicKey); // Stake tokens on-chain
+      const txid = await onChainStake(lamports, publicKey);
 
       if (txid) {
         toast.success("Stake Approved!");
@@ -70,12 +69,10 @@ export default function Stake() {
           </a>
         );
 
-        // Update local state
         setReceiptTokens((prev) => prev - amount);
         setStakedTokens((prev) => prev + amount);
 
-        // Update rewards in the GameContext
-        updateRewards(amount * 0.1); 
+        updateRewards(amount * 0.1);
       } else {
         toast.error("Failed to stake.");
       }
@@ -84,7 +81,7 @@ export default function Stake() {
       toast.error("An error occurred while staking.");
     } finally {
       setIsLoading(false);
-      setSolAmount(""); 
+      setSolAmount("");
     }
   };
 

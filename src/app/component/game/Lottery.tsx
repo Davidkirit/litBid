@@ -14,7 +14,7 @@ export default function LotteryPoolPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      await fetchGlobalState(); // Fetch global state when the component mounts
+      await fetchGlobalState(); 
     };
 
     fetchData();

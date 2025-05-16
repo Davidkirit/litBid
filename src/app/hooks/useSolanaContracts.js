@@ -1,23 +1,33 @@
-import { useState } from 'react';
-import * as anchor from '@project-serum/anchor';
-import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
-import { Program, AnchorProvider } from '@project-serum/anchor';
-import { useWallet } from '@solana/wallet-adapter-react';
-import idl from '../contracts/idl.json';
+import { useState } from "react";
+import * as anchor from "@project-serum/anchor";
+import {
+  Connection,
+  PublicKey,
+  Transaction,
+  SystemProgram,
+} from "@solana/web3.js";
+import { Program, AnchorProvider } from "@project-serum/anchor";
+import { useWallet } from "@solana/wallet-adapter-react";
+import idl from "../contracts/idl.json";
 
 const programID = new PublicKey(idl.metadata.address);
 const network = "https://api.devnet.solana.com"; // Change to Solana devnet
-const opts = { preflightCommitment: 'processed' };
+const opts = { preflightCommitment: "processed" };
 const connection = new Connection(network, opts.preflightCommitment);
-const treasury = new PublicKey('MNtwFkdaoazzHCXKMxWERiJ8N9P5hnUr1ujwK5M9T4p'); // Treasury public key -> placeholder for now
+const treasury = new PublicKey("MNtwFkdaoazzHCXKMxWERiJ8N9P5hnUr1ujwK5M9T4p");
 
 const useSolanaContracts = () => {
   const [callingSmartContract, setCallingSmartContract] = useState(false);
-  const [errorInCallingSmartContract, setErrorInCallingSmartContract] = useState(null);
+  const [errorInCallingSmartContract, setErrorInCallingSmartContract] =
+    useState(null);
   const wallet = useWallet();
   const { publicKey, signTransaction, sendTransaction } = wallet;
 
-  const provider = new AnchorProvider(connection, wallet, opts.preflightCommitment);
+  const provider = new AnchorProvider(
+    connection,
+    wallet,
+    opts.preflightCommitment
+  );
   const program = new Program(idl, programID, provider);
 
   const derivePDA = async (seeds, programId = program.programId) => {
@@ -34,9 +44,15 @@ const useSolanaContracts = () => {
       setCallingSmartContract(true);
       setErrorInCallingSmartContract(null);
 
-      const [globalStatePDA, globalStateBump] = await derivePDA([Buffer.from("global_state")]);
-      const [jackpotPDA, jackpotBump] = await derivePDA([Buffer.from("jackpot")]);
-      const [stakingPoolPDA, stakingPoolBump] = await derivePDA([Buffer.from("staking_pool")]);
+      const [globalStatePDA, globalStateBump] = await derivePDA([
+        Buffer.from("global_state"),
+      ]);
+      const [jackpotPDA, jackpotBump] = await derivePDA([
+        Buffer.from("jackpot"),
+      ]);
+      const [stakingPoolPDA, stakingPoolBump] = await derivePDA([
+        Buffer.from("staking_pool"),
+      ]);
 
       const tx = await program.rpc.initialize(globalTreasury, {
         accounts: {
@@ -62,52 +78,10 @@ const useSolanaContracts = () => {
   };
 
   /**
-   * Create a User Account
-   * @param {PublicKey} userAuthority - The user's public key
-   * @param {Keypair} userKeypair - The user's keypair
-   * @param {PublicKey|null} referrer - The referrer's public key or null
-   */
-  const createUser = async (userAuthority, userKeypair, referrer = null) => {
-    try {
-      setCallingSmartContract(true);
-      setErrorInCallingSmartContract(null);
-
-      const seeds = referrer
-        ? [Buffer.from("user"), userAuthority.toBuffer(), referrer.toBuffer()]
-        : [Buffer.from("user"), userAuthority.toBuffer()];
-      const [userPDA, userBump] = await derivePDA(seeds);
-
-      const userAccount = await program.account.userAccount.fetchNullable(userPDA);
-      if (userAccount) {
-        console.log("User already exists. Skipping creation.");
-        return userPDA;
-      }
-
-      const tx = await program.rpc.createUser(referrer, {
-        accounts: {
-          user: userPDA,
-          userAuthority: userAuthority,
-          systemProgram: SystemProgram.programId,
-        },
-        signers: [userKeypair],
-      });
-
-      console.log("createUser transaction signature", tx);
-      return userPDA;
-    } catch (err) {
-      console.error("Error creating user:", err);
-      setErrorInCallingSmartContract(err.message);
-      return null;
-    } finally {
-      setCallingSmartContract(false);
-    }
-  };
-
-  /**
    * Place a Bid with User Creation
    * @param {number} lamportsOffered - Amount in lamports to bid
    * @param {PublicKey} userPublicKey - The user's public key
-   * 
+   *
    * 'Press' Button
    */
   const placeBid = async (lamportsOffered, userPublicKey) => {
@@ -121,34 +95,20 @@ const useSolanaContracts = () => {
 
       // Create transaction and get latest blockhash
       const transaction = new Transaction();
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = userPublicKey;
 
       // Derive PDAs
-      const [userPDA] = await derivePDA([Buffer.from("user"), userPublicKey.toBuffer()]);
+      const [userPDA] = await derivePDA([
+        Buffer.from("user"),
+        userPublicKey.toBuffer(),
+      ]);
       const [globalStatePDA] = await derivePDA([Buffer.from("global_state")]);
       const [jackpotPDA] = await derivePDA([Buffer.from("jackpot")]);
       const [stakingPoolPDA] = await derivePDA([Buffer.from("staking_pool")]);
 
-      // Check if user account exists
-      const userAccount = await program.account.userAccount.fetchNullable(userPDA);
-      if (!userAccount) {
-        console.log("User does not exist. Creating user...");
-        const createUserInstruction = await program.methods
-          .createUser(null) // Assuming referrer is optional
-          .accounts({
-            user: userPDA,
-            userAuthority: userPublicKey,
-            systemProgram: SystemProgram.programId,
-          })
-          .instruction();
-        
-        transaction.add(createUserInstruction);
-        console.log("Added create user instruction");
-      }
-
-      // Add place bid instruction
       const placeBidInstruction = await program.methods
         .placeBid(new anchor.BN(lamportsOffered))
         .accounts({
@@ -158,7 +118,6 @@ const useSolanaContracts = () => {
           globalTreasury: treasury,
           jackpotAccount: jackpotPDA,
           stakingPoolAccount: stakingPoolPDA,
-          referrerAccount: userPDA, // Use user's PDA as referrer if none provided
           systemProgram: SystemProgram.programId,
         })
         .instruction();
@@ -168,7 +127,7 @@ const useSolanaContracts = () => {
       // Sign and send transaction
       const signedTx = await signTransaction(transaction);
       const txid = await connection.sendRawTransaction(signedTx.serialize());
-      
+
       // Wait for confirmation
       await connection.confirmTransaction({
         blockhash,
@@ -203,28 +162,34 @@ const useSolanaContracts = () => {
 
       // Create transaction and get latest blockhash
       const transaction = new Transaction();
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = userPublicKey;
 
       // Derive PDAs
-      const [userPDA] = await derivePDA([Buffer.from("user"), userPublicKey.toBuffer()]);
+      const [userPDA] = await derivePDA([
+        Buffer.from("user"),
+        userPublicKey.toBuffer(),
+      ]);
       const [stakingPoolPDA] = await derivePDA([Buffer.from("staking_pool")]);
       const [globalStatePDA] = await derivePDA([Buffer.from("global_state")]);
 
       // Check if user account exists
-      const userAccount = await program.account.userAccount.fetchNullable(userPDA);
+      const userAccount = await program.account.userAccount.fetchNullable(
+        userPDA
+      );
       if (!userAccount) {
         console.log("User does not exist. Creating user...");
         const createUserInstruction = await program.methods
-          .createUser(null) // Assuming referrer is optional
+
           .accounts({
             user: userPDA,
             userAuthority: userPublicKey,
             systemProgram: SystemProgram.programId,
           })
           .instruction();
-        
+
         transaction.add(createUserInstruction);
         console.log("Added create user instruction");
       }
@@ -277,7 +242,9 @@ const useSolanaContracts = () => {
       const [globalStatePDA] = await derivePDA([Buffer.from("global_state")]);
       const [jackpotPDA] = await derivePDA([Buffer.from("jackpot")]);
 
-      const globalState = await program.account.globalState.fetch(globalStatePDA);
+      const globalState = await program.account.globalState.fetch(
+        globalStatePDA
+      );
       const lastBidder = globalState.lastBidder;
       if (!lastBidder) {
         throw new Error("No last bidder found. Cannot finalize jackpot.");
@@ -316,7 +283,10 @@ const useSolanaContracts = () => {
       setErrorInCallingSmartContract(null);
 
       const [globalStatePDA] = await derivePDA([Buffer.from("global_state")]);
-      const [userPDA] = await derivePDA([Buffer.from("user"), userAuthority.toBuffer()]);
+      const [userPDA] = await derivePDA([
+        Buffer.from("user"),
+        userAuthority.toBuffer(),
+      ]);
       const [stakingPoolPDA] = await derivePDA([Buffer.from("staking_pool")]);
 
       const tx = await program.methods
@@ -349,7 +319,9 @@ const useSolanaContracts = () => {
   const fetchGlobalState = async () => {
     try {
       const [globalStatePDA] = await derivePDA([Buffer.from("global_state")]);
-      const globalState = await program.account.globalState.fetch(globalStatePDA);
+      const globalState = await program.account.globalState.fetch(
+        globalStatePDA
+      );
       return globalState;
     } catch (err) {
       console.error("Error fetching global state:", err);
@@ -364,7 +336,10 @@ const useSolanaContracts = () => {
    */
   const fetchUserAccount = async (userAuthority) => {
     try {
-      const [userPDA] = await derivePDA([Buffer.from("user"), userAuthority.toBuffer()]);
+      const [userPDA] = await derivePDA([
+        Buffer.from("user"),
+        userAuthority.toBuffer(),
+      ]);
       const userAccount = await program.account.userAccount.fetch(userPDA);
       return userAccount;
     } catch (err) {
@@ -380,7 +355,9 @@ const useSolanaContracts = () => {
   const fetchJackpotAccount = async () => {
     try {
       const [jackpotPDA] = await derivePDA([Buffer.from("jackpot")]);
-      const jackpotAccount = await program.account.jackpotAccount.fetch(jackpotPDA);
+      const jackpotAccount = await program.account.jackpotAccount.fetch(
+        jackpotPDA
+      );
       return jackpotAccount;
     } catch (err) {
       console.error("Error fetching jackpot account:", err);
@@ -396,7 +373,9 @@ const useSolanaContracts = () => {
   const fetchStakingPoolAccount = async () => {
     try {
       const [stakingPoolPDA] = await derivePDA([Buffer.from("staking_pool")]);
-      const stakingPoolAccount = await program.account.stakingPoolAccount.fetch(stakingPoolPDA);
+      const stakingPoolAccount = await program.account.stakingPoolAccount.fetch(
+        stakingPoolPDA
+      );
       return stakingPoolAccount;
     } catch (err) {
       console.error("Error fetching staking pool account:", err);
@@ -411,9 +390,12 @@ const useSolanaContracts = () => {
   const fetchCurrentJackpot = async () => {
     try {
       const [globalStatePDA] = await derivePDA([Buffer.from("global_state")]);
-      const globalStateAccount = await program.account.globalState.fetch(globalStatePDA);
+      const globalStateAccount = await program.account.globalState.fetch(
+        globalStatePDA
+      );
       const currentJackpotLamports = globalStateAccount.currentJackpot;
-      const currentJackpotSol = currentJackpotLamports / anchor.web3.LAMPORTS_PER_SOL;
+      const currentJackpotSol =
+        currentJackpotLamports / anchor.web3.LAMPORTS_PER_SOL;
       console.log(`Current Jackpot: ${currentJackpotSol} SOL`);
       return currentJackpotSol;
     } catch (err) {
@@ -424,16 +406,15 @@ const useSolanaContracts = () => {
 
   return {
     initialize,
-    createUser,
-    placeBid, // Press button. 
-    stake,    // 'Stake' button
-    finalizeJackpot,  // TODO: separate server to call this function every 15min
-    claimRewards,     // 'Claim Rewards' btn
-    fetchGlobalState, // Specificallly get the last bidder
-    fetchUserAccount, // 'rewards-tab'
+    placeBid,
+    stake,
+    finalizeJackpot,
+    claimRewards,
+    fetchGlobalState,
+    fetchUserAccount,
     fetchJackpotAccount,
     fetchStakingPoolAccount,
-    fetchCurrentJackpot, // current pool. 
+    fetchCurrentJackpot,
     callingSmartContract,
     errorInCallingSmartContract,
   };

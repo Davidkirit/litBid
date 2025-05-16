@@ -55,8 +55,8 @@ const SCORE_HALVING_EPOCHS = 90;
 export function GameProvider({ children }: { children: ReactNode }) {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
-  const { fetchGlobalState: fetchGlobalStateFromContract, createUser } =
-    useSolanaContracts();
+  const { fetchGlobalState: fetchGlobalStateFromContract } =
+    useSolanaContracts(); 
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [currentValue, setCurrentValue] = useState(0.0);
   const incrementValue = (amount: number) => {
@@ -98,19 +98,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         epoch: globalState.epoch,
         isEarlyBird: globalState.isEarlyBird,
       }));
-
-      // console.log("Global state fetched successfully:", globalState);
     } catch (error) {
       console.error("Failed to fetch global state:", error);
     }
   };
+
   useEffect(() => {
     const updateWalletStatus = async () => {
       if (connected && publicKey) {
         try {
-          // Ensure user account exists on the program
-          await createUser(publicKey);
-
           const balance = await connection.getBalance(publicKey);
           setGameState((prev) => ({
             ...prev,
@@ -119,7 +115,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
             solBalance: balance / 1e9,
           }));
         } catch (error) {
-          console.error("Failed to get wallet balance or create user:", error);
+          console.error("Failed to get wallet balance:", error);
         }
       } else {
         setGameState((prev) => ({
