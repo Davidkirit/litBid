@@ -93,13 +93,6 @@ const useSolanaContracts = () => {
         throw new Error("Wallet not connected");
       }
 
-      // Create transaction and get latest blockhash
-      const transaction = new Transaction();
-      const { blockhash, lastValidBlockHeight } =
-        await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = userPublicKey;
-
       // Derive PDAs
       const [userPDA] = await derivePDA([
         Buffer.from("user"),
@@ -109,31 +102,97 @@ const useSolanaContracts = () => {
       const [jackpotPDA] = await derivePDA([Buffer.from("jackpot")]);
       const [stakingPoolPDA] = await derivePDA([Buffer.from("staking_pool")]);
 
+      // Get global state to fetch treasury
+      const globalState = await program.account.globalState.fetch(globalStatePDA);
+      const treasury = globalState.globalTreasury;
+
+      // Get current jackpot to validate minimum bid
+      const currentJackpot = globalState.currentJackpot;
+      const minimumBid = currentJackpot.div(new anchor.BN(100)); // 1% of current jackpot
+
+      // Convert lamportsOffered to BN for comparison
+      const bidAmount = new anchor.BN(lamportsOffered);
+
+      if (bidAmount.lt(minimumBid)) {
+        const minBidInSol = minimumBid.toNumber() / 1e9;
+        throw new Error(`Bid too low. Minimum bid is ${minBidInSol} SOL`);
+      }
+
+      // Use dummy referrer like in the script
+      const dummyReferrer = new PublicKey("11111111111111111111111111111111");
+      const [referrerPDA] = await derivePDA([
+        Buffer.from("user"),
+        dummyReferrer.toBuffer(),
+      ]);
+
+      const accounts = {
+        globalState: globalStatePDA,
+        user: userPDA,
+        userAuthority: userPublicKey,
+        globalTreasury: treasury,
+        jackpotAccount: jackpotPDA,
+        stakingPoolAccount: stakingPoolPDA,
+        referrerAccount: referrerPDA,
+        referrer: dummyReferrer,
+        systemProgram: SystemProgram.programId,
+      };
+
+      console.log("Accounts being passed to placeBid:", {
+        globalState: accounts.globalState.toString(),
+        user: accounts.user.toString(),
+        userAuthority: accounts.userAuthority.toString(),
+        globalTreasury: accounts.globalTreasury.toString(),
+        jackpotAccount: accounts.jackpotAccount.toString(),
+        stakingPoolAccount: accounts.stakingPoolAccount.toString(),
+        referrerAccount: accounts.referrerAccount.toString(),
+        referrer: accounts.referrer.toString(),
+        systemProgram: accounts.systemProgram.toString(),
+      });
+
+      console.log("Bid details:", {
+        bidAmount: bidAmount.toString(),
+        minimumBid: minimumBid.toString(),
+        currentJackpot: currentJackpot.toString()
+      });
+
+      // Create transaction and get latest blockhash
+      const transaction = new Transaction();
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = userPublicKey;
+
       const placeBidInstruction = await program.methods
-        .placeBid(new anchor.BN(lamportsOffered))
-        .accounts({
-          globalState: globalStatePDA,
-          user: userPDA,
-          userAuthority: userPublicKey,
-          globalTreasury: treasury,
-          jackpotAccount: jackpotPDA,
-          stakingPoolAccount: stakingPoolPDA,
-          systemProgram: SystemProgram.programId,
-        })
+        .placeBid(bidAmount)
+        .accounts(accounts)
         .instruction();
 
       transaction.add(placeBidInstruction);
 
       // Sign and send transaction
       const signedTx = await signTransaction(transaction);
-      const txid = await connection.sendRawTransaction(signedTx.serialize());
-
-      // Wait for confirmation
-      await connection.confirmTransaction({
-        blockhash,
-        lastValidBlockHeight,
-        signature: txid,
+      
+      // Add a unique identifier to prevent duplicate processing
+      const txid = await connection.sendRawTransaction(signedTx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: "processed",
+        maxRetries: 3
       });
+
+      // Wait for confirmation with timeout
+      const confirmation = await Promise.race([
+        connection.confirmTransaction({
+          blockhash,
+          lastValidBlockHeight,
+          signature: txid,
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("Transaction confirmation timeout")), 30000)
+        )
+      ]);
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${confirmation.value.err}`);
+      }
 
       console.log("Transaction signature", txid);
       return txid;

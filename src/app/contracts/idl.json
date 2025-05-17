@@ -73,7 +73,9 @@
           "name": "userAuthority",
           "isMut": true,
           "isSigner": true,
-          "docs": ["The *bidder's* wallet (signer)."]
+          "docs": [
+            "The *bidder's* wallet (signer)."
+          ]
         },
         {
           "name": "globalTreasury",
@@ -91,10 +93,26 @@
           "isSigner": false
         },
         {
+          "name": "referrerAccount",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "referrer",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "The *referrer's* public key (where we send 2%). Could be the same as user_authority (self-ref) or default (no ref)."
+          ]
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["The System Program for SOL transfers."]
+          "docs": [
+            "The System Program for SOL transfers."
+          ]
         }
       ],
       "args": [
@@ -121,7 +139,9 @@
           "name": "userAuthority",
           "isMut": false,
           "isSigner": true,
-          "docs": ["The user authority who is staking the funds."]
+          "docs": [
+            "The user authority who is staking the funds."
+          ]
         },
         {
           "name": "stakingPoolAccount",
@@ -137,7 +157,9 @@
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["System program"]
+          "docs": [
+            "System program"
+          ]
         }
       ],
       "args": [
@@ -172,13 +194,17 @@
           "name": "userAuthority",
           "isMut": false,
           "isSigner": true,
-          "docs": ["The user authority who is claiming the rewards."]
+          "docs": [
+            "The user authority who is claiming the rewards."
+          ]
         },
         {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false,
-          "docs": ["The system program for handling transfers."]
+          "docs": [
+            "The system program for handling transfers."
+          ]
         }
       ],
       "args": []
