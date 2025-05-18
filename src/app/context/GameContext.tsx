@@ -252,10 +252,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         throw new Error("Transaction failed");
       }
 
-      // After a successful bid, fetch the latest state from the blockchain
       await fetchGlobalState();
-
-      // Timer reset logic is handled by fetchGlobalState (from on-chain state)
     } catch (error) {
       console.error("Error placing bid:", error);
       throw error;
@@ -309,12 +306,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const calculateRewards = () => {
-    // Logic to calculate rewards for staking pool and referrals
     console.log("Calculating rewards...");
   };
 
   const distributeStakingPool = () => {
-    // Logic to distribute staking pool based on scores
     console.log("Distributing staking pool...");
   };
 
