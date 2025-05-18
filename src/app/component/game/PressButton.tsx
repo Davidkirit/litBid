@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 
 import { Press_Start_2P } from "next/font/google";
@@ -17,8 +17,15 @@ export default function PressButton() {
   const { publicKey } = useWallet();
   const { placeBid: onChainPlaceBid, callingSmartContract } =
     useSolanaContracts();
-  const { gameState, placeBid: contextPlaceBid, incrementValue } = useGame();
-  const [bidAmount, setBidAmount] = useState<string>("");
+  const {
+    gameState,
+    placeBid: contextPlaceBid,
+    incrementValue,
+    fetchGlobalState,
+    bidAmount,
+    setBidAmount,
+    setGameState,
+  } = useGame();
 
   const handleBidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBidAmount(e.target.value);
@@ -42,10 +49,17 @@ export default function PressButton() {
 
       if (txid) {
         toast.success("Bid placed successfully!");
+        await fetchGlobalState();
 
         incrementValue(amount);
 
         await contextPlaceBid(amount);
+
+        setGameState((prev) => ({
+          ...prev,
+          userScore: prev.userScore + 1,
+          userBidAmount: prev.userBidAmount,
+        }));
 
         toast.info(
           <a
@@ -75,7 +89,7 @@ export default function PressButton() {
           onChange={handleBidChange}
           min="0"
           step="0.1"
-          style={{ zIndex: 10000, position: 'relative', pointerEvents: 'auto' }}
+          style={{ zIndex: 10000, position: "relative", pointerEvents: "auto" }}
           className={`${pressStart2P.className} w-32 px-3 py-2 bg-black/50 text-white border-2 border-white/30 rounded-lg focus:outline-none focus:border-white/50`}
           placeholder="Bid in SOL"
         />

@@ -103,7 +103,9 @@ const useSolanaContracts = () => {
       const [stakingPoolPDA] = await derivePDA([Buffer.from("staking_pool")]);
 
       // Get global state to fetch treasury
-      const globalState = await program.account.globalState.fetch(globalStatePDA);
+      const globalState = await program.account.globalState.fetch(
+        globalStatePDA
+      );
       const treasury = globalState.globalTreasury;
 
       // Get current jackpot to validate minimum bid
@@ -137,27 +139,10 @@ const useSolanaContracts = () => {
         systemProgram: SystemProgram.programId,
       };
 
-      console.log("Accounts being passed to placeBid:", {
-        globalState: accounts.globalState.toString(),
-        user: accounts.user.toString(),
-        userAuthority: accounts.userAuthority.toString(),
-        globalTreasury: accounts.globalTreasury.toString(),
-        jackpotAccount: accounts.jackpotAccount.toString(),
-        stakingPoolAccount: accounts.stakingPoolAccount.toString(),
-        referrerAccount: accounts.referrerAccount.toString(),
-        referrer: accounts.referrer.toString(),
-        systemProgram: accounts.systemProgram.toString(),
-      });
-
-      console.log("Bid details:", {
-        bidAmount: bidAmount.toString(),
-        minimumBid: minimumBid.toString(),
-        currentJackpot: currentJackpot.toString()
-      });
-
       // Create transaction and get latest blockhash
       const transaction = new Transaction();
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = userPublicKey;
 
@@ -170,12 +155,12 @@ const useSolanaContracts = () => {
 
       // Sign and send transaction
       const signedTx = await signTransaction(transaction);
-      
+
       // Add a unique identifier to prevent duplicate processing
       const txid = await connection.sendRawTransaction(signedTx.serialize(), {
         skipPreflight: false,
         preflightCommitment: "processed",
-        maxRetries: 3
+        maxRetries: 3,
       });
 
       // Wait for confirmation with timeout
@@ -185,19 +170,20 @@ const useSolanaContracts = () => {
           lastValidBlockHeight,
           signature: txid,
         }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Transaction confirmation timeout")), 30000)
-        )
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Transaction confirmation timeout")),
+            30000
+          )
+        ),
       ]);
 
       if (confirmation.value.err) {
         throw new Error(`Transaction failed: ${confirmation.value.err}`);
       }
 
-      console.log("Transaction signature", txid);
       return txid;
     } catch (err) {
-      console.error("Error in placeBid:", err);
       setErrorInCallingSmartContract(err.message);
       return null;
     } finally {
@@ -239,7 +225,6 @@ const useSolanaContracts = () => {
         userPDA
       );
       if (!userAccount) {
-        console.log("User does not exist. Creating user...");
         const createUserInstruction = await program.methods
 
           .accounts({
@@ -250,7 +235,6 @@ const useSolanaContracts = () => {
           .instruction();
 
         transaction.add(createUserInstruction);
-        console.log("Added create user instruction");
       }
 
       // Add stake instruction
@@ -281,7 +265,6 @@ const useSolanaContracts = () => {
       console.log("Stake transaction signature", txid);
       return txid;
     } catch (err) {
-      console.error("Error in stake:", err);
       setErrorInCallingSmartContract(err.message);
       return null;
     } finally {
@@ -323,7 +306,7 @@ const useSolanaContracts = () => {
       console.log("Finalize Jackpot transaction signature:", tx);
       return tx;
     } catch (err) {
-      console.error("Error finalizing jackpot:", err);
+      // Remove console log here
       setErrorInCallingSmartContract(err.message);
       return null;
     } finally {
@@ -383,7 +366,6 @@ const useSolanaContracts = () => {
       );
       return globalState;
     } catch (err) {
-      console.error("Error fetching global state:", err);
       return null;
     }
   };
@@ -402,7 +384,6 @@ const useSolanaContracts = () => {
       const userAccount = await program.account.userAccount.fetch(userPDA);
       return userAccount;
     } catch (err) {
-      console.error("Error fetching user account:", err);
       return null;
     }
   };
@@ -419,7 +400,7 @@ const useSolanaContracts = () => {
       );
       return jackpotAccount;
     } catch (err) {
-      console.error("Error fetching jackpot account:", err);
+      // Remove console log here
       return null;
     }
   };
@@ -437,7 +418,7 @@ const useSolanaContracts = () => {
       );
       return stakingPoolAccount;
     } catch (err) {
-      console.error("Error fetching staking pool account:", err);
+      // Remove console log here
       return null;
     }
   };
@@ -458,7 +439,6 @@ const useSolanaContracts = () => {
       console.log(`Current Jackpot: ${currentJackpotSol} SOL`);
       return currentJackpotSol;
     } catch (err) {
-      console.error("Error fetching current jackpot:", err);
       return null;
     }
   };

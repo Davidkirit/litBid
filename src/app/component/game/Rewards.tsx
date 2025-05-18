@@ -21,17 +21,31 @@ export default function Rewards() {
   const [loading, setLoading] = useState(false);
 
   // Fetch user account on wallet connection
-  useEffect(() => {
-    const loadUserAccount = async () => {
-      if (!publicKey) return;
-      setLoading(true);
-      const accountData = await fetchUserAccount(publicKey);
-      setUserAccount(accountData);
-      setLoading(false);
-    };
+  const loadUserAccount = async () => {
+    if (!publicKey) return;
+    setLoading(true);
+    const accountData = await fetchUserAccount(publicKey);
+    setUserAccount(accountData);
+    setLoading(false);
+  };
 
+  useEffect(() => {
     loadUserAccount();
   }, [publicKey, fetchUserAccount]);
+
+  const handleClaimRewards = async () => {
+    if (!publicKey) return;
+    setLoading(true);
+    try {
+      await claimRewards(publicKey);
+
+      await loadUserAccount();
+    } catch (err) {
+      console.error("Error claiming rewards:", err);
+      toast.error("Failed to claim rewards. Please try again.");
+    }
+    setLoading(false);
+  };
 
   return (
     <div className="my-8 mx-auto w-full max-w-md bg-[#0B0A1E]/60 backdrop-blur-lg shadow-[0_0_10px_rgba(255,215,0,0.2)] rounded-lg p-20 flex flex-col items-center text-center space-y-12">
@@ -65,18 +79,22 @@ export default function Rewards() {
               `,
             }}
           >
-            {userAccount ? userAccount.rewards.toFixed() : "0"}
+            <span>
+              {userAccount && userAccount.rewards
+                ? userAccount.rewards.toNumber().toFixed(2)
+                : "0"}
+            </span>
           </span>
         )}
       </div>
 
       {/* Claim Rewards Button */}
       <button
-        onClick={() => claimRewards(publicKey)}
+        onClick={handleClaimRewards}
         disabled={callingSmartContract || loading}
         className="mt-6 px-6 py-2 rounded bg-yellow-500 text-black font-bold"
       >
-        Claim Rewards
+        {loading || callingSmartContract ? "Processing..." : "Claim Rewards"}
       </button>
 
       {errorInCallingSmartContract && (

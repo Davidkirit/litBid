@@ -10,7 +10,7 @@ const pressStart2P = Press_Start_2P({
 });
 
 export default function Countdown() {
-  const { gameState, setGameState } = useGame();
+  const { gameState } = useGame();
   const { timer, firstBidPlaced } = gameState;
 
   const [displayTimer, setDisplayTimer] = useState(timer);
@@ -19,37 +19,17 @@ export default function Countdown() {
     setDisplayTimer(timer);
   }, [timer]);
 
-  // Handle countdown logic
   useEffect(() => {
     if (!firstBidPlaced) return;
-
     const interval = setInterval(() => {
       setDisplayTimer((prev) => {
-        if (prev > 0) {
-          return prev - 1;
-        } else {
-          clearInterval(interval);
-          return 0;
-        }
+        if (prev > 0) return prev - 1;
+        clearInterval(interval);
+        return 0;
       });
     }, 1000);
-
     return () => clearInterval(interval);
   }, [firstBidPlaced]);
-
-  // Reset timer logic when a new bid is placed
-  useEffect(() => {
-    if (firstBidPlaced && timer > 1800) {
-      setDisplayTimer(timer);
-    } else if (firstBidPlaced && timer <= 1800) {
-      // If the timer is less than or equal to 30 minutes, reset to 30 minutes
-      setDisplayTimer(1800);
-      setGameState((prev) => ({
-        ...prev,
-        timer: 1800,
-      }));
-    }
-  }, [timer, firstBidPlaced, setGameState]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);

@@ -7,36 +7,43 @@ import { toast } from "react-toastify";
 import { useGame } from "../../context/GameContext";
 
 export default function Stake() {
-  const { stake: onChainStake, callingSmartContract } = useSolanaContracts();
+  const {
+    stake: onChainStake,
+    fetchUserAccount,
+    callingSmartContract,
+  } = useSolanaContracts();
   const { publicKey } = useWallet();
-  const { gameState, updateRewards, fetchGlobalState } = useGame();
+  const { gameState, fetchGlobalState } = useGame();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [receiptTokens, setReceiptTokens] = useState(0); // User's receipt tokens
-  const [stakedTokens, setStakedTokens] = useState(0); // User's staked tokens
-  const [solAmount, setSolAmount] = useState(""); // Amount to stake
+  const [receiptTokens, setReceiptTokens] = useState(0);
+  const [stakedTokens, setStakedTokens] = useState(0);
+  const [solAmount, setSolAmount] = useState("");
+
+  // Fetch user staking data from blockchain
+  const fetchUserData = async () => {
+    if (!publicKey) return;
+    try {
+      const userAccount = await fetchUserAccount(publicKey);
+      setReceiptTokens(
+        userAccount?.receiptTokens ? userAccount.receiptTokens / 1e9 : 0
+      );
+      setStakedTokens(
+        userAccount?.stakedTokens ? userAccount.stakedTokens / 1e9 : 0
+      );
+    } catch (error) {
+      console.error("Failed to fetch user data:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!publicKey) return;
-
-      try {
-        const userAccount = await onChainStake.fetchUserAccount(publicKey);
-        setReceiptTokens(userAccount.receiptTokens / 1e9); // Convert lamports to SOL
-        setStakedTokens(userAccount.stakedTokens / 1e9);
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
-      }
-    };
-
     fetchUserData();
-  }, [publicKey, onChainStake]);
+  }, [publicKey, fetchUserAccount]);
 
   useEffect(() => {
     const fetchData = async () => {
       await fetchGlobalState();
     };
-
     fetchData();
   }, [fetchGlobalState]);
 
@@ -53,7 +60,7 @@ export default function Stake() {
 
     setIsLoading(true);
     try {
-      const lamports = amount * 1e9; // Convert SOL to lamports
+      const lamports = amount * 1e9;
       const txid = await onChainStake(lamports, publicKey);
 
       if (txid) {
@@ -69,10 +76,8 @@ export default function Stake() {
           </a>
         );
 
-        setReceiptTokens((prev) => prev - amount);
-        setStakedTokens((prev) => prev + amount);
-
-        updateRewards(amount * 0.1);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await fetchUserData();
       } else {
         toast.error("Failed to stake.");
       }
@@ -89,7 +94,7 @@ export default function Stake() {
     <div className="p-4 space-y-4">
       <h1 className="text-2xl font-bold text-white">Stake Tokens</h1>
       <p className="text-white">Pool Amount: {gameState.poolAmount} SOL</p>
-      <p className="text-white">Your Stake: {gameState.userStake} SOL</p>
+      <p className="text-white">Your Stake: {stakedTokens.toFixed(2)} TOKENS</p>
       {/* Top stats */}
       <div className="bg-[#1a1b35] px-3 py-1 rounded-md inline-block">
         <span className="text-gray-400 pixel-font text-xs">

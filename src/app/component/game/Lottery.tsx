@@ -10,11 +10,11 @@ const pressStart2P = Press_Start_2P({
 });
 
 export default function LotteryPoolPage() {
-  const { fetchGlobalState, gameState } = useGame();
+  const { fetchGlobalState, gameState, bidAmount } = useGame();
 
   useEffect(() => {
     const fetchData = async () => {
-      await fetchGlobalState(); 
+      await fetchGlobalState();
     };
 
     fetchData();
@@ -51,7 +51,7 @@ export default function LotteryPoolPage() {
             `,
           }}
         >
-          Pool Amount: {gameState.poolAmount.toFixed(1)} SOL
+          Pool Amount: {gameState.poolAmount.toFixed(2)} SOL
         </span>
       </div>
 
@@ -60,7 +60,7 @@ export default function LotteryPoolPage() {
         className={`${pressStart2P.className} flex flex-col items-center gap-1 sm:gap-2 w-full mt-6`}
       >
         <span className="text-sm sm:text-base text-white whitespace-nowrap">
-          Current Bid: {gameState.currentBid.toFixed(1)} SOL
+          Current Bid: {gameState.currentBid?.toFixed(1) ?? "0.0"} SOL
         </span>
       </div>
     </div>

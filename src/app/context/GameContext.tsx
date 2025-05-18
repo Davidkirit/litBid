@@ -29,6 +29,8 @@ interface GameState {
   walletAddress: string | null;
   solBalance: number | null;
   firstBidPlaced: boolean;
+  lastBidder: string | null;
+  rewards?: number;
 }
 
 interface GlobalState {
@@ -58,6 +60,8 @@ interface GameContextType {
   currentValue: number;
   incrementValue: (amount: number) => void;
   setUserBidAmount: (amount: number) => void;
+  bidAmount: string;
+  setBidAmount: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -71,9 +75,13 @@ const DEBOUNCE_DELAY = 5000; // 5 seconds
 export function GameProvider({ children }: { children: ReactNode }) {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
-  const { fetchGlobalState: fetchGlobalStateFromContract, placeBid: placeBidOnChain } = useSolanaContracts();
+  const {
+    fetchGlobalState: fetchGlobalStateFromContract,
+    placeBid: placeBidOnChain,
+  } = useSolanaContracts();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [currentValue, setCurrentValue] = useState(0.0);
+  const [bidAmount, setBidAmount] = useState<string>("");
   const fetchTimeoutRef = useRef<NodeJS.Timeout>();
   const lastFetchTimeRef = useRef<number>(0);
 
@@ -97,16 +105,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
     walletAddress: null,
     solBalance: null,
     firstBidPlaced: false,
+    lastBidder: null, // <-- initialize here
   });
 
   const setUserBidAmount = useCallback((amount: number) => {
-    setGameState(prev => ({
+    setGameState((prev) => ({
       ...prev,
-      userBidAmount: amount
+      userBidAmount: amount,
     }));
   }, []);
 
-  // Debounced fetch global state
   const fetchGlobalState = useCallback(async () => {
     const now = Date.now();
     if (now - lastFetchTimeRef.current < DEBOUNCE_DELAY) {
@@ -119,23 +127,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     fetchTimeoutRef.current = setTimeout(async () => {
       try {
-        const globalState = await fetchGlobalStateFromContract() as GlobalState;
+        const globalState =
+          (await fetchGlobalStateFromContract()) as GlobalState;
 
         if (!globalState) {
           console.error("Global state is null (possibly not initialized yet).");
           return;
         }
 
-        console.log("Fetched global state:", globalState);
-
         setGameState((prev) => ({
           ...prev,
           poolAmount: globalState.currentJackpot / 1e9,
-          currentBid: (globalState.currentJackpot / 1e9) * MIN_BID_PERCENTAGE,
-          timer: INITIAL_MAX_TIMER,
+          currentBid: globalState.lastBidAmount
+            ? globalState.lastBidAmount / 1e9
+            : 0,
+          lastBidder: globalState.lastBidder ?? null,
+          timer: calculateTimer(globalState),
           epoch: 1,
           isEarlyBird: true,
           userBidAmount: prev.userBidAmount,
+          firstBidPlaced: !!globalState.lastBidder,
         }));
 
         lastFetchTimeRef.current = Date.now();
@@ -145,14 +156,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }, DEBOUNCE_DELAY);
   }, [fetchGlobalStateFromContract]);
 
-  // Fetch global state on mount and when connected
+  // Helper to calculate timer based on on-chain state
+  function calculateTimer(globalState: GlobalState) {
+    if (!globalState.lastBidTimestamp) return 3600; // 1 hour default
+    const now = Math.floor(Date.now() / 1000);
+    const end =
+      globalState.lastBidTimerEnd ?? globalState.lastBidTimestamp + 3600;
+    return Math.max(0, end - now);
+  }
+
   useEffect(() => {
     if (connected) {
       fetchGlobalState();
     }
   }, [connected, fetchGlobalState]);
 
-  // Update wallet status only when connection or public key changes
   useEffect(() => {
     const updateWalletStatus = async () => {
       if (connected && publicKey) {
@@ -182,7 +200,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     updateWalletStatus();
   }, [connected, publicKey, connection]);
 
-  // Timer countdown effect - only update timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchGlobalState();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [fetchGlobalState]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setGameState((prev) => ({
@@ -195,14 +219,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle timer reaching zero - fetch new state
   useEffect(() => {
     if (gameState.timer === 0) {
       fetchGlobalState();
     }
   }, [gameState.timer, fetchGlobalState]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (fetchTimeoutRef.current) {
@@ -221,42 +243,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      console.log("Starting placeBid with amount:", amount);
-      
       // Convert SOL to lamports (1 SOL = 1e9 lamports)
-      const lamportsOffered = Math.floor(amount * 1e9); // Ensure we're using whole lamports
-      
-      console.log("Bid details:", {
-        amountInSol: amount,
-        lamportsOffered,
-        minimumBid: gameState.currentBid,
-        publicKey: publicKey.toString()
-      });
+      const lamportsOffered = Math.floor(amount * 1e9);
 
-      // Call the Solana contract's placeBid function
       const txid = await placeBidOnChain(lamportsOffered, publicKey);
-      
+
       if (!txid) {
         throw new Error("Transaction failed");
       }
 
-      // Update local state after successful transaction
-      const newPoolAmount = gameState.poolAmount + amount * 0.8; // 80% to jackpot
-      const referralRewards = amount * 0.02; // 2% to referrer
-      const stakingPool = amount * 0.1; // 10% to staking pool
-      const treasury = amount * 0.08; // 8% to treasury
+      // After a successful bid, fetch the latest state from the blockchain
+      await fetchGlobalState();
 
-      setGameState((prev) => ({
-        ...prev,
-        poolAmount: newPoolAmount,
-        currentBid: calculateMinimumBid(newPoolAmount),
-        timer: INITIAL_MAX_TIMER,
-        firstBidPlaced: true,
-        referralRewards: prev.referralRewards + referralRewards,
-        userBidAmount: prev.userBidAmount,
-      }));
-
-      console.log(`Bid placed: ${amount} SOL. Transaction: ${txid}`);
+      // Timer reset logic is handled by fetchGlobalState (from on-chain state)
     } catch (error) {
       console.error("Error placing bid:", error);
       throw error;
@@ -289,10 +288,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       console.log("Current game state:", {
         currentBid: gameState.currentBid,
         poolAmount: gameState.poolAmount,
-        isConnected: gameState.isConnected
+        isConnected: gameState.isConnected,
       });
 
-      // Use the user's input bid amount
       await placeBid(gameState.userBidAmount);
 
       const newMaxTimer = Math.max(INITIAL_MAX_TIMER, gameState.maxTimer - 1);
@@ -320,6 +318,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     console.log("Distributing staking pool...");
   };
 
+  const updateRewards = (amount: number) => {
+    setGameState((prev) => ({
+      ...prev,
+      rewards: (prev.rewards || 0) + amount,
+    }));
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -338,6 +343,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         currentValue,
         incrementValue,
         setUserBidAmount,
+        bidAmount,
+        setBidAmount,
       }}
     >
       {children}
