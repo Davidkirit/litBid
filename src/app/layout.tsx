@@ -5,6 +5,12 @@ import { GameProvider } from "./context/GameContext";
 import WalletContextProvider from "./component/wallet/WalletProvider";
 import dynamic from "next/dynamic";
 
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// const wallets = [new PhantomWalletAdapter()];
+// const network = "https://api.devnet.solana.com";
+
 const pressStart2P = Press_Start_2P({
   weight: "400",
   subsets: ["latin"],
@@ -28,14 +34,22 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={pressStart2P.variable}>
+        {/* <ConnectionProvider endpoint={network}> */}
+        {/* <WalletProvider wallets={wallets} autoConnect> */}
+        {/* <WalletModalProvider> */}
         <WalletContextProvider>
           <GameProvider>
-            <div className="min-h-screen ">
+            <div className="min-h-screen">
               <NavbarNoSSR />
               <main className="pt-16">{children}</main>
             </div>
+
+            <ToastContainer position="top-right" autoClose={3000} />
           </GameProvider>
         </WalletContextProvider>
+        {/* </WalletModalProvider> */}
+        {/* </WalletProvider> */}
+        {/* </ConnectionProvider> */}
       </body>
     </html>
   );

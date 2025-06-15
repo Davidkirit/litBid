@@ -1,18 +1,25 @@
 "use client";
 
+import { useEffect } from "react";
+import { useGame } from "../../context/GameContext";
 import { Press_Start_2P } from "next/font/google";
-import { Inter } from "next/font/google";
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
   subsets: ["latin"],
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-});
-
 export default function LotteryPoolPage() {
+  const { fetchGlobalState, gameState, bidAmount } = useGame();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchGlobalState();
+    };
+
+    fetchData();
+  }, [fetchGlobalState]);
+
   return (
     <div className="flex flex-col items-center text-center px-4 sm:px-6 md:px-8 w-full max-w-full overflow-hidden">
       {/* Heading */}
@@ -22,10 +29,10 @@ export default function LotteryPoolPage() {
         LOTTERY POOL
       </div>
 
-      {/* 3D number display */}
-      <div className="relative w-full flex justify-center">
+      {/* Pool Amount */}
+      <div className="relative w-full flex justify-center mt-4">
         <span
-          className={`${pressStart2P.className} text-4xl sm:text-5xl md:text-6xl lg:text-7xl relative z-20 whitespace-nowrap`}
+          className={`${pressStart2P.className} text-sm sm:text-base relative z-20 whitespace-nowrap`}
           style={{
             color: "#282A64",
             textShadow: `
@@ -44,19 +51,16 @@ export default function LotteryPoolPage() {
             `,
           }}
         >
-          30.0K
+          Pool Amount: {gameState.poolAmount.toFixed(2)} SOL
         </span>
       </div>
 
-      {/* Token Info */}
+      {/* Current Bid */}
       <div
-        className={`${pressStart2P.className} flex flex-col items-center gap-1 sm:gap-2 w-full`}
+        className={`${pressStart2P.className} flex flex-col items-center gap-1 sm:gap-2 w-full mt-6`}
       >
         <span className="text-sm sm:text-base text-white whitespace-nowrap">
-          $LITBID
-        </span>
-        <span className="text-[9px] sm:text-[10px] md:text-xs text-white/80 whitespace-nowrap">
-          AWARDED ACROSS TEN
+          Current Bid: {gameState.currentBid?.toFixed(1) ?? "0.0"} SOL
         </span>
       </div>
     </div>

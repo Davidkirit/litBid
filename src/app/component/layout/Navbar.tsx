@@ -25,9 +25,7 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#282A64] backdrop-blur-sm border-b border-[#FFD700]/20 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Logo/Brand */}
           <div className="flex items-center gap-4">
-            {/*SVG logo */}
             <div className="h-[3rem] w-auto">
               <img src="logo.svg" alt="litbid" className="h-full w-auto" />
             </div>
@@ -55,8 +53,6 @@ export default function Navbar() {
               LITBID
             </span>
           </div>
-
-          {/* Wallet Connect */}
           <div className="flex-shrink-0 ml-auto">
             <WalletMultiButton className="!bg-[#FF3B9A] !rounded-lg !px-6 !py-2 !text-white hover:!bg-[#FF3B9A]/80 !transition-all !duration-200 !h-auto !text-sm pixel-font" />
           </div>

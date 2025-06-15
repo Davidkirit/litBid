@@ -40,7 +40,10 @@ export default function Coin({ index }: CoinProps) {
       style={{
         left: `${position.x}%`,
         top: `${position.y}%`,
-        animation: `float-${animationPattern} ${duration}s ease-in-out infinite`,
+        animationName: `float-${animationPattern}`,
+        animationDuration: `${duration}s`,
+        animationTimingFunction: "ease-in-out",
+        animationIterationCount: "infinite",
         animationDelay: `${animationDelay}s`,
       }}
     >

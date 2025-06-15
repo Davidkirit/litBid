@@ -11,7 +11,7 @@ export default function Footer() {
           <h1 className="text-2xl font-pixel">LitBid</h1>
           <div className="flex space-x-6">
             <Link
-              href="https://twitter.com"
+              href="https://x.com/LitBid"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-blue-400 transition-colors"
@@ -19,7 +19,7 @@ export default function Footer() {
               <FaTwitter size={24} />
             </Link>
             <Link
-              href="https://github.com"
+              href=""
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-gray-400 transition-colors"
